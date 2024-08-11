@@ -46,7 +46,7 @@ public final class MockResourceManager {
 
     public static ReloadableResourceManager create() {
 
-        var testResourceBasePath = AppEng.class.getResource("/META-INF/neoforge.mods.toml");
+        var testResourceBasePath = AppEng.class.getResource("/fabric.mod.json");
         if (testResourceBasePath == null) {
             throw new IllegalStateException("Couldn't find root of assets");
         }

@@ -25,10 +25,10 @@ buildscript {
 }
 
 plugins {
-    id "net.neoforged.moddev"
+    id "fabric-loom"
     id "maven-publish"
     id "com.diffplug.spotless"
-    id 'io.github.goooler.shadow'
+    id "io.github.goooler.shadow"
     id "de.undercouch.download"
 }
 
@@ -91,41 +91,75 @@ dependencies {
     // Used for the guide export
     guideExportOnly("org.bytedeco:ffmpeg-platform:${ffmpeg_version}")
 
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+    }
+
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
+
     // compile against provided APIs
-    compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
-    compileOnly "mcp.mobius.waila:wthit-api:neo-${project.wthit_version}"
-    compileOnly "curse.maven:jade-324717:${project.jade_file_id}"
-    compileOnly "mcjty.theoneprobe:theoneprobe:${project.top_version}"
+    modCompileOnly("dev.emi:emi-fabric:${emi_version}:api") {
+        exclude group: "net.fabricmc"
+        exclude group: "net.fabricmc.fabric-api"
+    }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}") {
+        exclude group: "net.fabricmc"
+        exclude group: "net.fabricmc.fabric-api"
+    }
+    modCompileOnly("mcp.mobius.waila:wthit-api:fabric-${project.wthit_version}") {
+        exclude group: "net.fabricmc"
+        exclude group: "net.fabricmc.fabric-api"
+    }
+    modCompileOnly("maven.modrinth:jade:${project.jade_version}") {
+        exclude group: "net.fabricmc"
+        exclude group: "net.fabricmc.fabric-api"
+    }
 
     switch (project.runtime_itemlist_mod) {
         case "emi":
-            localRuntimeOnly "dev.emi:emi-neoforge:${emi_version}"
+            modLocalRuntime("dev.emi:emi-fabric:${emi_version}") {
+                exclude group: "net.fabricmc"
+                exclude group: "net.fabricmc.fabric-api"
+            }
             break
         case "rei":
-            localRuntimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
+            modLocalRuntime("me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}") {
+                exclude group: "net.fabricmc"
+                exclude group: "net.fabricmc.fabric-api"
+            }
             break
     }
 
     switch (project.runtime_tooltip_mod) {
         case "wthit":
-            localRuntimeOnly "mcp.mobius.waila:wthit:neo-${project.wthit_version}"
+            modLocalRuntime("mcp.mobius.waila:wthit:fabric-${project.wthit_version}") {
+                exclude group: "net.fabricmc"
+                exclude group: "net.fabricmc.fabric-api"
+            }
             break
         case "jade":
-            localRuntimeOnly "curse.maven:jade-324717:${project.jade_file_id}"
-            break
-        case "top":
-            localRuntimeOnly "mcjty.theoneprobe:theoneprobe:${project.top_version}"
+            modLocalRuntime("maven.modrinth:jade:${project.jade_version}") {
+                exclude group: "net.fabricmc"
+                exclude group: "net.fabricmc.fabric-api"
+            }
             break
     }
 
-    if (project.runtime_curio == "true") {
-        localRuntimeOnly("top.theillusivec4.curios:curios-neoforge:${project.curios_version}")
+    if (project.runtime_trinkets == "true") {
+        modLocalRuntime("dev.emi:trinkets:${project.trinkets_version}") {
+            exclude group: "net.fabricmc"
+            exclude group: "net.fabricmc.fabric-api"
+        }
     }
 
-    // Athena
-    if (project.runtime_athena == "true") {
-        localRuntimeOnly("curse.maven:athena-841890:${project.athena_file_id}")
+    // Fabric API.
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}")
+    include modImplementation("teamreborn:energy:${project.energy_version}") {
+        exclude group: "net.fabricmc"
+        exclude group: "net.fabricmc.fabric-api"
     }
 
     // unit test dependencies
@@ -138,7 +172,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core")
     testImplementation("com.google.guava:guava-testlib:21.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
-    testImplementation("net.neoforged:testframework:${project.neoforge_version}")
+    //testImplementation("net.neoforged:testframework:${project.neoforge_version}")
 
     compileOnly 'org.apache.commons:commons-configuration2:2.9.0'
 
@@ -146,15 +180,74 @@ dependencies {
     buildtoolsImplementation 'com.google.code.gson:gson:2.8.9'
 }
 
+allprojects {
+    repositories {
+        maven {
+            url "https://maven.shedaniel.me/"
+            content {
+                includeGroup "me.shedaniel"
+                includeGroup "me.shedaniel.cloth"
+                includeGroup "dev.architectury"
+            }
+        }
+        maven {
+            url "https://maven2.bai.lol"
+            content {
+                includeGroup "mcp.mobius.waila"
+                includeGroup "lol.bai"
+            }
+        }
+        maven {
+            name = "TerraformersMC"
+            url = "https://maven.terraformersmc.com/"
+            content {
+                includeGroup "dev.emi"
+            }
+        }
+        maven {
+            name = "Modrinth"
+            url = "https://api.modrinth.com/maven"
+            content {
+                includeGroup "maven.modrinth"
+            }
+        }
+        maven {
+            url "https://maven.parchmentmc.net/"
+            content {
+                includeGroup "org.parchmentmc.data"
+            }
+        }
+        maven { // for TOP
+            url "https://maven.k-4u.nl/"
+            content {
+                includeGroup "mcjty.theoneprobe"
+            }
+        }
+        maven {
+            url = "https://maven.theillusivec4.top/"
+            content {
+                includeGroup "top.theillusivec4.curios"
+            }
+        }
+        maven {
+            url = "https://maven.blamejared.com/"
+            content {
+                includeGroup "mezz.jei"
+            }
+        }
+        mavenCentral()
+    }
+}
+
 ///////////////////
 // Version Number
 ext.tag = System.getenv('TAG') ?: ""
 if (ext.tag) {
-    if (!ext.tag.startsWith("neoforge/v")) {
-        throw new GradleException("Tags for the neoforge version should start with neoforge/: ${ext.tag}")
+    if (!ext.tag.startsWith("fabric/v")) {
+        throw new GradleException("Tags for the fabric version should start with fabric/: ${ext.tag}")
     }
 
-    project.version = ext.tag.substring("neoforge/v".length())
+    project.version = ext.tag.substring("fabric/v".length())
 } else {
     // This essentially tries to implement delay expansion of the project version based on a value source to
     // still support configuration caching.
@@ -163,7 +256,7 @@ if (ext.tag) {
             return version;
         }
         return providers.of(ProjectVersionSource.class, spec -> {
-            spec.getParameters().getDefaultBranches().addAll("main", "neoforge/" + project.minecraft_version)
+            spec.getParameters().getDefaultBranches().addAll("main", "fabric/" + project.minecraft_version)
         });
     }).get()
 }
@@ -182,113 +275,61 @@ dependencies {
     buildtoolsImplementation 'com.google.code.gson:gson:2.8.9'
 }
 
-/**
- * Configures properties common to all run configurations
- */
-Map<String, String> commonSystemProperties = [
-        'forge.logging.console.level': 'debug',
-        'appeng.tests'               : 'true',
-]
-
-neoForge {
-    version = project.neoforge_version
-
-    mods {
-        ae2 {
-            sourceSet sourceSets.main
-        }
-    }
+loom {
+    accessWidenerPath = file("src/main/resources/ae2.accesswidener")
 
     runs {
-        configureEach {
-            gameDirectory = project.file('run')
-            systemProperties = commonSystemProperties
-            // property "mixin.debug.export", "true"
-
-            additionalRuntimeClasspathConfiguration.extendsFrom configurations.shaded
-            additionalRuntimeClasspathConfiguration.extendsFrom configurations.guideExportOnly
-        }
         client {
             client()
-            systemProperties = [
-                    *                          : commonSystemProperties,
-                    "appeng.tests"             : "true",
-                    "guideDev.ae2guide.sources": file("guidebook").absolutePath,
-            ]
+            property("appeng.tests", "true")
+            property("guideDev.ae2guide.sources", file("guidebook").absolutePath)
         }
         gametestWorld {
             client()
-            programArguments = [
-                    "--username", "AE2Dev", "--quickPlaySingleplayer", "GametestWorld"
-            ]
-            systemProperties = [
-                    "appeng.tests"             : "true",
-                    "guideDev.ae2guide.sources": file("guidebook").absolutePath,
-            ]
+            programArgs "--username", "AE2Dev", "--quickPlaySingleplayer", "GametestWorld"
+            property("appeng.tests", "true")
+            property("guideDev.ae2guide.sources", file("guidebook").absolutePath)
         }
         guide {
             client()
-            systemProperties = [
-                    "guideDev.ae2guide.sources"    : file("guidebook").absolutePath,
-                    "guideDev.ae2guide.startupPage": "ae2:index.md"
-            ]
+            property("guideDev.ae2guide.sources", file("guidebook").absolutePath)
+            property("guideDev.ae2guide.startupPage", "ae2:index.md")
         }
         server {
             server()
         }
-        data {
-            data()
-            programArguments = [
-                    '--mod', 'ae2',
-                    '--all',
-                    '--output', file('src/generated/resources/').absolutePath,
-                    '--existing', file('src/main/resources').absolutePath
-            ]
+        datagen {
+            client()
+            property("fabric-api.datagen")
+            property("appeng.version", project.version)
+            property("fabric-api.datagen.output-dir", file("src/generated/resources").absolutePath)
+            property("appeng.datagen.existingData", file("src/main/resources").absolutePath)
         }
         guideexport {
             client()
-            systemProperties = [
-                    "appeng.runGuideExportAndExit": "true",
-                    "appeng.guideExportFolder"    : file("$buildDir/guide").absolutePath,
-                    "guideDev.ae2guide.sources"   : file("guidebook").absolutePath,
-                    "appeng.version"              : project.version
-            ]
+            property("appeng.runGuideExportAndExit", "true")
+            property("appeng.guideExportFolder", file("$buildDir/guide").absolutePath)
+            property("guideDev.ae2guide.sources", file("guidebook").absolutePath)
+            property("appeng.version", project.version)
         }
         // Use to run the tests
         gametest {
-            type = "gameTestServer"
-            gameDirectory = project.file("build/gametest")
+            server()
+            name "gameTestServer"
+            property "appeng.tests", "true"
+            vmArg "-Dfabric-api.gametest"
+            runDir = project.file("build/gametest")
         }
-    }
-
-    unitTest {
-        enable()
-        testedMod = mods.ae2
     }
 }
 
 //////////////
 // Artifacts
-Map<String, String> expansionVariables = [
-        "project_version": project.version,
-        'minecraft_version': project.minecraft_version_range,
-        'neoforge_version': project.neoforge_version_range,
-        'top_version': project.top_version_range,
-        'jade_version': project.jade_version_range
-]
-
 processResources {
     exclude '.cache'
-    // Ensure the resources get re-evaluate when the version changes
-    for (var entry : expansionVariables.entrySet()) {
-        inputs.property(entry.key, entry.value)
-    }
 
-    filesMatching("META-INF/neoforge.mods.toml") {
-        expand expansionVariables
-        filter { line ->
-            line.replace('version="0.0.0"', "version=\"${expansionVariables['project_version']}\"")
-        }
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
     }
 }
 

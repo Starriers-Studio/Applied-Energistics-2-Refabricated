@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "ae2",
+  "version": "${version}",
+  "name": "Applied Energistics 2 Refabricated",
+  "description": "A Mod about matter, energy and using them to conquer the world..",
+  "authors": [
+    "Starriers Studio", "TeamAppliedEnergistics"
+  ],
+  "contact": {
+    "sources": "https://github.com/Starriers-Studio/Applied-Energistics-2-Refabricated"
+  },
+  "license": "LGPLv3",
+  "icon": "assets/ae2/logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": ["appeng.core.AppEngClientStartup"],
+    "server": ["appeng.core.AppEngServerStartup"],
+    "fabric-datagen": ["appeng.datagen.DatagenEntrypoint"],
+    "rei_client": ["appeng.integration.modules.rei.ReiPlugin"],
+    "jade": ["appeng.integration.modules.jade.JadeModule"]
+  },
+  "mixins": ["ae2.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric": ">=0.102.0",
+    "minecraft": "1.21"
+  },
+  "conflicts": {
+    "appliedenergistics2": "*"
+  },
+  "suggests": {},
+  "accessWidener": "ae2.accesswidener",
+  "custom": {
+    "waila:plugins": {
+      "id": "ae2:wthit",
+      "initializer": "appeng.integration.modules.wthit.WthitModule"
+    }
+  }
+}
