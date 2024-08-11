@@ -1,8 +1,9 @@
-[![Build master](https://img.shields.io/github/actions/workflow/status/AppliedEnergistics/Applied-Energistics-2/build.yml?style=flat-square&branch=master)](https://github.com/AppliedEnergistics/Applied-Energistics-2/actions?query=workflow%3A%22Build+master%22)
-[![Latest Release](https://img.shields.io/github/v/release/AppliedEnergistics/Applied-Energistics-2?style=flat-square&label=Release)](https://github.com/AppliedEnergistics/Applied-Energistics-2/releases)
-[![Latest PreRelease](https://img.shields.io/github/v/release/AppliedEnergistics/Applied-Energistics-2?include_prereleases&style=flat-square&label=Pre)](https://github.com/AppliedEnergistics/Applied-Energistics-2/releases)
+# Applied Energistics 2 Refabricated
 
-# Applied Energistics 2
+## Histories
+> A long time ago, there were two other major loaders for this game...   
+> Then AE2 team leaved fabric...
+
 
 ## Table of Contents
 
@@ -26,8 +27,8 @@ A Mod about Matter, Energy and using them to conquer the world..
 
 * [Website](https://appliedenergistics.org/)
 * [Players Guide](https://guide.appliedenergistics.org/)
-* [Discord](https://discord.gg/Zd6t9ka7ne)
-* [GitHub](https://github.com/AppliedEnergistics/Applied-Energistics-2)
+* [Discord (AE2)](https://discord.gg/Zd6t9ka7ne)
+* [GitHub](https://github.com/Starriers-Studio/Applied-Energistics-2-Refabricated)
 
 ## License
 
