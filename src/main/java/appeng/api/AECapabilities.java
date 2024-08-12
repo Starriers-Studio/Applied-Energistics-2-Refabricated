@@ -18,10 +18,10 @@
 
 package appeng.api;
 
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Direction;
-import net.neoforged.neoforge.capabilities.BlockCapability;
 
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.implementations.blockentities.ICraftingMachine;
@@ -37,19 +37,19 @@ public final class AECapabilities {
     private AECapabilities() {
     }
 
-    public static BlockCapability<MEStorage, @Nullable Direction> ME_STORAGE = BlockCapability
-            .createSided(AppEng.makeId("me_storage"), MEStorage.class);
+    public static BlockApiLookup<MEStorage, @Nullable Direction> ME_STORAGE = BlockApiLookup
+            .get(AppEng.makeId("me_storage"), MEStorage.class, Direction.class);
 
-    public static BlockCapability<ICraftingMachine, @Nullable Direction> CRAFTING_MACHINE = BlockCapability
-            .createSided(AppEng.makeId("crafting_machine"), ICraftingMachine.class);
+    public static BlockApiLookup<ICraftingMachine, @Nullable Direction> CRAFTING_MACHINE = BlockApiLookup
+            .get(AppEng.makeId("crafting_machine"), ICraftingMachine.class, Direction.class);
 
-    public static BlockCapability<GenericInternalInventory, @Nullable Direction> GENERIC_INTERNAL_INV = BlockCapability
-            .createSided(AppEng.makeId("generic_internal_inv"), GenericInternalInventory.class);
+    public static BlockApiLookup<GenericInternalInventory, @Nullable Direction> GENERIC_INTERNAL_INV = BlockApiLookup
+            .get(AppEng.makeId("generic_internal_inv"), GenericInternalInventory.class, Direction.class);
 
-    public static BlockCapability<IInWorldGridNodeHost, Void> IN_WORLD_GRID_NODE_HOST = BlockCapability
-            .createVoid(AppEng.makeId("inworld_gridnode_host"), IInWorldGridNodeHost.class);
+    public static BlockApiLookup<IInWorldGridNodeHost, Void> IN_WORLD_GRID_NODE_HOST = BlockApiLookup
+            .get(AppEng.makeId("inworld_gridnode_host"), IInWorldGridNodeHost.class, Void.class);
 
-    public static BlockCapability<ICrankable, @Nullable Direction> CRANKABLE = BlockCapability
-            .createSided(AppEng.makeId("crankable"), ICrankable.class);
+    public static BlockApiLookup<ICrankable, @Nullable Direction> CRANKABLE = BlockApiLookup
+            .get(AppEng.makeId("crankable"), ICrankable.class, Direction.class);
 
 }

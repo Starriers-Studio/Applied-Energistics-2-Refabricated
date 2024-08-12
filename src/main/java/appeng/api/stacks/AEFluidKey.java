@@ -8,6 +8,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import dev.architectury.fluid.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -25,7 +26,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.neoforged.neoforge.fluids.FluidStack;
 
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
@@ -37,9 +37,9 @@ public final class AEFluidKey extends AEKey {
                             holder -> holder.is(Fluids.EMPTY.builtInRegistryHolder())
                                     ? DataResult.error(() -> "Fluid must not be minecraft:empty")
                                     : DataResult.success(holder))
-                            .fieldOf("id").forGetter(key -> key.stack.getFluidHolder()),
+                            .fieldOf("id").forGetter(key -> key.stack.getFluid().builtInRegistryHolder()),
                     DataComponentPatch.CODEC.optionalFieldOf("components", DataComponentPatch.EMPTY)
-                            .forGetter(key -> key.stack.getComponentsPatch()))
+                            .forGetter(key -> !key.stack.isEmpty() ? key.stack.components.asPatch() : DataComponentPatch.EMPTY))
                     .apply(instance, (fluidHolder,
                             dataComponentPatch) -> new AEFluidKey(new FluidStack(fluidHolder, 1, dataComponentPatch))));
     public static final Codec<AEFluidKey> CODEC = MAP_CODEC.codec();

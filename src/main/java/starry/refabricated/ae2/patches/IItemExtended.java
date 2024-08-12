@@ -16,4 +16,8 @@ public interface IItemExtended {
         return false;
     }
 
+    default boolean isBookEnchantable(ItemStack stack, ItemStack book) {
+        return true;
+    }
+
 }

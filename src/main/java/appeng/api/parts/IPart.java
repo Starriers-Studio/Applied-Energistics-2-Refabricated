@@ -28,6 +28,8 @@ import java.util.Set;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
@@ -51,9 +53,6 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IManagedGridNode;
@@ -76,7 +75,7 @@ public interface IPart extends ICustomCableConnection, Clearable {
      * Render dynamic portions of this part, as part of the cable bus TESR. This part has to return true for
      * {@link #requireDynamicRender()} in order for this method to be called.
      */
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     default void renderDynamic(float partialTicks, PoseStack poseStack, MultiBufferSource buffers,
             int combinedLightIn, int combinedOverlayIn) {
     }
@@ -161,7 +160,7 @@ public interface IPart extends ICustomCableConnection, Clearable {
     /**
      * a block around the bus's host has been changed.
      * 
-     * @see net.neoforged.neoforge.common.extensions.IBlockExtension#onNeighborChange
+     * @see None
      */
     default void onNeighborChanged(BlockGetter level, BlockPos pos, BlockPos neighbor) {
     }
@@ -442,8 +441,9 @@ public interface IPart extends ICustomCableConnection, Clearable {
      *
      * @return The model data to pass to the model. Only useful if custom models are used.
      */
-    default ModelData getModelData() {
-        return ModelData.EMPTY;
+    @Nullable
+    default Object getRenderAttachmentData() {
+        return null;
     }
 
     /**

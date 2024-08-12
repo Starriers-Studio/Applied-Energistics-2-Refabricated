@@ -5,11 +5,11 @@ import java.util.Set;
 
 import com.google.common.base.Preconditions;
 
+import net.minecraft.core.MappedRegistry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Registry;
-import net.neoforged.neoforge.registries.callback.BakeCallback;
 
 /**
  * Manages the registry used to synchronize key spaces to the client.
@@ -17,10 +17,7 @@ import net.neoforged.neoforge.registries.callback.BakeCallback;
 @ApiStatus.Internal
 public final class AEKeyTypesInternal {
     @Nullable
-    private static Registry<AEKeyType> registry;
-
-    @Nullable
-    private static Set<AEKeyType> allTypes;
+    private static MappedRegistry<AEKeyType> registry;
 
     private AEKeyTypesInternal() {
     }
@@ -30,21 +27,9 @@ public final class AEKeyTypesInternal {
         return registry;
     }
 
-    public static void setRegistry(Registry<AEKeyType> registry) {
+    public static void setRegistry(MappedRegistry<AEKeyType> registry) {
         Preconditions.checkState(AEKeyTypesInternal.registry == null);
         AEKeyTypesInternal.registry = registry;
-        registry.addCallback((BakeCallback<AEKeyType>) (ignored -> {
-            var types = new HashSet<AEKeyType>();
-            for (var aeKeyType : registry) {
-                types.add(aeKeyType);
-            }
-            allTypes = Set.copyOf(types);
-        }));
-    }
-
-    public static Set<AEKeyType> getAllTypes() {
-        Preconditions.checkState(allTypes != null, "AE2 isn't initialized yet.");
-        return allTypes;
     }
 
     public static void register(AEKeyType keyType) {

@@ -20,6 +20,8 @@ package appeng.blockentity;
 
 import java.util.List;
 
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -30,7 +32,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.IItemHandler;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.GenericStack;
@@ -105,16 +106,16 @@ public abstract class AEBaseInvBlockEntity extends AEBaseBlockEntity implements 
     }
 
     @Nullable
-    public IItemHandler getExposedItemHandler(@Nullable Direction side) {
+    public Storage<ItemVariant> getExposedItemHandler(@Nullable Direction side) {
         if (side == null) {
-            return getInternalInventory().toItemHandler();
+            return getInternalInventory().toStorage();
         } else {
             var exposed = getExposedInventoryForSide(side);
             // If the inventory has 0 slots, it's probably a dummy.
             // Return null to avoid pipe connections to it.
             // isEmpty checks for stacks, use size to only check the slot count.
             // noinspection SizeReplaceableByIsEmpty
-            return exposed.size() == 0 ? null : exposed.toItemHandler();
+            return exposed.size() == 0 ? null : exposed.toStorage();
         }
     }
 

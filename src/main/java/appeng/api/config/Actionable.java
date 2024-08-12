@@ -23,29 +23,29 @@
 
 package appeng.api.config;
 
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
+import starry.refabricated.ae2.helpers.FluidHelpers;
 
 public enum Actionable {
     /**
      * Perform the intended action.
      */
-    MODULATE(FluidAction.EXECUTE),
+    MODULATE(FluidHelpers.FluidAction.EXECUTE),
 
     /**
      * Pretend to perform the action.
      */
-    SIMULATE(FluidAction.SIMULATE);
+    SIMULATE(FluidHelpers.FluidAction.SIMULATE);
 
-    private final FluidAction fluidAction;
+    private final FluidHelpers.FluidAction fluidAction;
 
-    Actionable(FluidAction fluidAction) {
+    Actionable(FluidHelpers.FluidAction fluidAction) {
         this.fluidAction = fluidAction;
     }
 
-    public static Actionable of(FluidAction action) {
+    public static Actionable of(FluidHelpers.FluidAction action) {
         return switch (action) {
-            case EXECUTE -> MODULATE;
-            case SIMULATE -> SIMULATE;
+            case FluidHelpers.FluidAction.EXECUTE -> MODULATE;
+            case FluidHelpers.FluidAction.SIMULATE -> SIMULATE;
         };
     }
 
@@ -53,7 +53,7 @@ public enum Actionable {
         return simulate ? SIMULATE : MODULATE;
     }
 
-    public FluidAction getFluidAction() {
+    public FluidHelpers.FluidAction getFluidAction() {
         return fluidAction;
     }
 

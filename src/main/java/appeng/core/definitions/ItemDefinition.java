@@ -21,11 +21,11 @@ package appeng.core.definitions;
 import java.util.function.Supplier;
 
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.neoforge.registries.DeferredItem;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -34,9 +34,9 @@ import appeng.util.helpers.ItemComparisonHelper;
 
 public class ItemDefinition<T extends Item> implements ItemLike, Supplier<T> {
     private final String englishName;
-    private final DeferredItem<T> item;
+    private final T item;
 
-    public ItemDefinition(String englishName, DeferredItem<T> item) {
+    public ItemDefinition(String englishName, T item) {
         this.englishName = englishName;
         this.item = item;
     }
@@ -46,7 +46,7 @@ public class ItemDefinition<T extends Item> implements ItemLike, Supplier<T> {
     }
 
     public ResourceLocation id() {
-        return this.item.getId();
+        return BuiltInRegistries.ITEM.getKey(item);
     }
 
     public ItemStack stack() {
@@ -61,7 +61,7 @@ public class ItemDefinition<T extends Item> implements ItemLike, Supplier<T> {
         return new GenericStack(AEItemKey.of(item), stackSize);
     }
 
-    public Holder<Item> holder() {
+    public Item holder() {
         return item;
     }
 
@@ -106,11 +106,11 @@ public class ItemDefinition<T extends Item> implements ItemLike, Supplier<T> {
 
     @Override
     public T get() {
-        return item.get();
+        return item;
     }
 
     @Override
     public T asItem() {
-        return item.get();
+        return item;
     }
 }

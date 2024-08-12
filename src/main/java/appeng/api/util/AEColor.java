@@ -31,9 +31,10 @@ import com.mojang.serialization.Codec;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.codec.StreamEncoder;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.DyeColor;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * List of all colors supported by AE, their names, and various colors for display.
@@ -66,8 +67,17 @@ public enum AEColor implements StringRepresentable {
 
     public static final Codec<AEColor> CODEC = StringRepresentable.fromEnum(AEColor::values);
 
-    public static final StreamCodec<FriendlyByteBuf, AEColor> STREAM_CODEC = NeoForgeStreamCodecs
-            .enumCodec(AEColor.class);
+    public static final StreamCodec<FriendlyByteBuf, AEColor> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public @NotNull AEColor decode(FriendlyByteBuf buf) {
+            return buf.readEnum(AEColor.class);
+        }
+
+        @Override
+        public void encode(FriendlyByteBuf buf, @NotNull AEColor value) {
+            buf.writeEnum(value);
+        }
+    };
 
     // TODO (RID): Sorted the colours according to the colour wheel
     public static final List<AEColor> VALID_COLORS = Arrays.asList(WHITE, LIGHT_GRAY, GRAY, BLACK, LIME, YELLOW,

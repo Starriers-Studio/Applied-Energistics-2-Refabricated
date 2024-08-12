@@ -20,12 +20,12 @@ package appeng.block.networking;
 
 import java.util.List;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -41,7 +41,7 @@ public class EnergyCellBlockItem extends AEBaseBlockItem implements IAEItemPower
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public void addCheckedInformation(ItemStack stack, TooltipContext context, List<Component> lines,
             TooltipFlag advancedTooltips) {
         var storedEnergy = getAECurrentPower(stack);

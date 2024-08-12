@@ -36,7 +36,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.common.world.chunk.ForcedChunkManager;
 
 import appeng.api.config.Setting;
 import appeng.api.config.Settings;
@@ -278,7 +277,7 @@ public class SpatialAnchorBlockEntity extends AENetworkedBlockEntity
     }
 
     /**
-     * Used to restore loaded chunks from {@link ForcedChunkManager}
+     * Used to restore loaded chunks from
      */
     public void registerChunk(ChunkPos chunkPos) {
         this.chunks.add(chunkPos);

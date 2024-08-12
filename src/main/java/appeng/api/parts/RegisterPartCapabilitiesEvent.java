@@ -8,24 +8,21 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.neoforged.bus.api.Event;
-import net.neoforged.fml.event.IModBusEvent;
-import net.neoforged.neoforge.capabilities.BlockCapability;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
 
-public class RegisterPartCapabilitiesEvent extends Event implements IModBusEvent {
+public class RegisterPartCapabilitiesEvent {
 
     final Set<BlockEntityType<? extends IPartHost>> hostTypes = new HashSet<>();
 
-    final Map<BlockCapability<?, ?>, Function<?, Direction>> contextMappers = new HashMap<>();
+    final Map<BlockApiLookup<?, ?>, Function<?, Direction>> contextMappers = new HashMap<>();
 
-    final Map<BlockCapability<?, ?>, BlockCapabilityRegistration<?, ?>> capabilityRegistrations = new HashMap<>();
+    final Map<BlockApiLookup<?, ?>, BlockCapabilityRegistration<?, ?>> capabilityRegistrations = new HashMap<>();
 
     record BlockCapabilityRegistration<T, C>(
-            BlockCapability<T, C> capability,
+            BlockApiLookup<T, C> capability,
             Function<C, Direction> contextToSide,
             Map<Class<? extends IPart>, ICapabilityProvider<?, C, T>> parts) {
         public BlockCapabilityRegistration(BlockCapability<T, C> capability, Function<C, Direction> contextToSide) {

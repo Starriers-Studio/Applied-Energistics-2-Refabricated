@@ -21,4 +21,8 @@ public interface IItemStackExtended {
         return self().isEmpty() || self().getItem().doesSneakBypassUse(self(), level, pos, player);
     }
 
+    default boolean isBookEnchantable(ItemStack book) {
+        return self().getItem().isBookEnchantable(self(), book);
+    }
+
 }

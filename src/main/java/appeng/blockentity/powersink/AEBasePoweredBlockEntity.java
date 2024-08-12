@@ -31,7 +31,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.energy.IEnergyStorage;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -42,6 +41,7 @@ import appeng.api.networking.events.GridPowerStorageStateChanged.PowerEventType;
 import appeng.blockentity.AEBaseInvBlockEntity;
 import appeng.helpers.ForgeEnergyAdapter;
 import appeng.me.energy.StoredEnergyAmount;
+import team.reborn.energy.api.EnergyStorage;
 
 public abstract class AEBasePoweredBlockEntity extends AEBaseInvBlockEntity
         implements IAEPowerStorage, IExternalPowerSink {
@@ -51,7 +51,7 @@ public abstract class AEBasePoweredBlockEntity extends AEBaseInvBlockEntity
     private final StoredEnergyAmount stored = new StoredEnergyAmount(0, 10000, this::emitPowerStateEvent);
     private static final Set<Direction> ALL_SIDES = ImmutableSet.copyOf(EnumSet.allOf(Direction.class));
     private Set<Direction> internalPowerSides = ALL_SIDES;
-    private final IEnergyStorage forgeEnergyAdapter;
+    private final EnergyStorage forgeEnergyAdapter;
     // Cache the optional to not continuously re-allocate it or the supplier
 
     public AEBasePoweredBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState blockState) {
@@ -169,7 +169,7 @@ public abstract class AEBasePoweredBlockEntity extends AEBaseInvBlockEntity
     }
 
     @Nullable
-    public IEnergyStorage getEnergyStorage(@Nullable Direction side) {
+    public EnergyStorage getEnergyStorage(@Nullable Direction side) {
         if (side == null && getPowerSides().equals(ALL_SIDES)) {
             return forgeEnergyAdapter;
         } else if (side != null && getPowerSides().contains(side)) {

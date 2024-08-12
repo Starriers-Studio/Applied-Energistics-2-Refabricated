@@ -28,7 +28,11 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
+import net.fabricmc.fabric.api.lookup.v1.item.ItemApiLookup;
+import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.fabricmc.fabric.api.transfer.v1.item.base.SingleStackStorage;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -37,7 +41,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.neoforge.capabilities.ItemCapability;
 
 import appeng.core.definitions.AEParts;
 import appeng.items.parts.PartItem;
@@ -110,10 +113,28 @@ public final class P2PTunnelAttunement {
      * @param tunnelPart  The P2P-tunnel part item.
      * @param description Description for display in REI/JEI.
      */
-    public synchronized static void registerAttunementApi(ItemLike tunnelPart, ItemCapability<?, Void> cap,
-            Component description) {
-        Objects.requireNonNull(cap, "cap");
-        apiAttunements.add(new ApiAttunement(cap, validateTunnelPartItem(tunnelPart), description));
+    public synchronized static <T> void registerAttunementApi(ItemLike tunnelPart, ItemApiLookup<?, T> api,
+                                                              Function<ItemStack, T> contextProvider, Component description) {
+        Objects.requireNonNull(api, "api");
+        Objects.requireNonNull(contextProvider, "contextProvider");
+        apiAttunements.add(new ApiAttunement<>(api, contextProvider, validateTunnelPartItem(tunnelPart), description));
+    }
+
+    public synchronized static void registerAttunementApi(ItemLike tunnelPart,
+                                                          ItemApiLookup<?, ContainerItemContext> api, Component description) {
+        registerAttunementApi(tunnelPart, api, stack -> ContainerItemContext.ofSingleSlot(new SingleStackStorage() {
+            ItemStack buffer = stack;
+
+            @Override
+            protected ItemStack getStack() {
+                return buffer;
+            }
+
+            @Override
+            protected void setStack(ItemStack stack) {
+                buffer = stack;
+            }
+        }), description);
     }
 
     /**
@@ -159,12 +180,13 @@ public final class P2PTunnelAttunement {
         return item;
     }
 
-    record ApiAttunement(
-            ItemCapability<?, Void> capability,
+    record ApiAttunement<T>(
+            ItemApiLookup<?, T> api,
+            Function<ItemStack, T> contextProvider,
             Item tunnelType,
             Component component) {
         public boolean hasApi(ItemStack stack) {
-            return stack.getCapability(capability) != null;
+            return api.find(stack, contextProvider.apply(stack)) != null;
         }
     }
 }

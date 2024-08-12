@@ -3,11 +3,11 @@ package appeng.core.network.clientbound;
 
 import java.util.UUID;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.me.common.PendingCraftingJobs;
@@ -58,7 +58,7 @@ public record CraftingJobStatusPacket(
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public void handleOnClient(Player player) {
         if (status == Status.STARTED) {
             if (AEConfig.instance().isPinAutoCraftedItems()) {

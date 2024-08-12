@@ -43,7 +43,7 @@ public class LocalizationProvider implements IAE2DataProvider {
     @Override
     public final CompletableFuture<?> run(CachedOutput cache) {
         for (var block : AEBlocks.getBlocks()) {
-            add("block.ae2." + block.id().getPath(), block.getEnglishName());
+            add("block.ae2." + block.id().getPath(), block.englishName());
         }
         for (var item : AEItems.getItems()) {
             add("item.ae2." + item.id().getPath(), item.getEnglishName());

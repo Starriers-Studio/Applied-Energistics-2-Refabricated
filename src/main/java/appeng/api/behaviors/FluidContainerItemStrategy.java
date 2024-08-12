@@ -2,12 +2,17 @@ package appeng.api.behaviors;
 
 import com.google.common.primitives.Ints;
 
+import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.capabilities.Capabilities;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEFluidKey;
@@ -24,53 +29,38 @@ class FluidContainerItemStrategy
 
     @Override
     public @Nullable Context findCarriedContext(Player player, AbstractContainerMenu menu) {
-        if (menu.getCarried().getCapability(Capabilities.FluidHandler.ITEM) != null) {
-            return new CarriedContext(player, menu);
-        }
+        var handler = ContainerItemContext.ofPlayerCursor(player, menu).find(FluidStorage.ITEM);
+        if (handler != null) return new CarriedContext(handler, player, menu);
         return null;
     }
 
     @Override
     public @Nullable Context findPlayerSlotContext(Player player, int slot) {
-        if (player.getInventory().getItem(slot).getCapability(Capabilities.FluidHandler.ITEM) != null) {
-            return new PlayerInvContext(player, slot);
-        }
-
+        var handler = ContainerItemContext.ofPlayerSlot(player, PlayerInventoryStorage.of(player.getInventory()).getSlots().get(slot)).find(FluidStorage.ITEM);
+        if (handler != null) return new PlayerInvContext(handler, player, slot);
         return null;
     }
 
     @Override
     public long extract(Context context, AEFluidKey what, long amount, Actionable mode) {
-        var stack = context.getStack();
-        var copy = stack.copyWithCount(1);
-        var fluidHandler = copy.getCapability(Capabilities.FluidHandler.ITEM);
-        if (fluidHandler == null) {
-            return 0;
+        try (var tx = Transaction.openOuter()) {
+            var extracted = context.getStorage().extract(FluidVariant.of(what.getFluid()), amount, tx);
+            if (mode == Actionable.MODULATE) {
+                tx.commit();
+            }
+            return extracted;
         }
-
-        int extracted = fluidHandler.drain(what.toStack(Ints.saturatedCast(amount)), mode.getFluidAction()).getAmount();
-        if (mode == Actionable.MODULATE) {
-            stack.shrink(1);
-            context.addOverflow(fluidHandler.getContainer());
-        }
-        return extracted;
     }
 
     @Override
     public long insert(Context context, AEFluidKey what, long amount, Actionable mode) {
-        var stack = context.getStack();
-        var copy = stack.copyWithCount(1);
-        var fluidHandler = copy.getCapability(Capabilities.FluidHandler.ITEM);
-        if (fluidHandler == null) {
-            return 0;
+        try (var tx = Transaction.openOuter()) {
+            var inserted = context.getStorage().insert(FluidVariant.of(what.getFluid()), amount, tx);
+            if (mode == Actionable.MODULATE) {
+                tx.commit();
+            }
+            return inserted;
         }
-
-        int filled = fluidHandler.fill(what.toStack(Ints.saturatedCast(amount)), mode.getFluidAction());
-        if (mode == Actionable.MODULATE) {
-            stack.shrink(1);
-            context.addOverflow(fluidHandler.getContainer());
-        }
-        return filled;
     }
 
     @Override
@@ -89,6 +79,8 @@ class FluidContainerItemStrategy
     }
 
     interface Context {
+        Storage<FluidVariant> getStorage();
+
         ItemStack getStack();
 
         void setStack(ItemStack stack);
@@ -96,7 +88,12 @@ class FluidContainerItemStrategy
         void addOverflow(ItemStack stack);
     }
 
-    private record CarriedContext(Player player, AbstractContainerMenu menu) implements Context {
+    private record CarriedContext(Storage<FluidVariant> storage, Player player, AbstractContainerMenu menu) implements Context {
+        @Override
+        public Storage<FluidVariant> getStorage() {
+            return storage;
+        }
+
         @Override
         public ItemStack getStack() {
             return menu.getCarried();
@@ -116,7 +113,12 @@ class FluidContainerItemStrategy
         }
     }
 
-    private record PlayerInvContext(Player player, int slot) implements Context {
+    private record PlayerInvContext(Storage<FluidVariant> storage, Player player, int slot) implements Context {
+        @Override
+        public Storage<FluidVariant> getStorage() {
+            return storage;
+        }
+
         @Override
         public ItemStack getStack() {
             return player.getInventory().getItem(slot);

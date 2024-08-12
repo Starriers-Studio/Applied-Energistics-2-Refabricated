@@ -27,6 +27,7 @@ import java.util.Objects;
 import com.google.gson.stream.JsonWriter;
 import com.mojang.serialization.JsonOps;
 
+import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 
@@ -86,7 +86,7 @@ import appeng.util.SettingsFrom;
 import appeng.util.helpers.ItemComparisonHelper;
 
 public class AEBaseBlockEntity extends BlockEntity
-        implements Nameable, ISegmentedInventory, Clearable, IDebugExportable {
+        implements Nameable, ISegmentedInventory, Clearable, IDebugExportable, RenderAttachmentBlockEntity {
     private static final Logger LOG = LoggerFactory.getLogger(AEBaseBlockEntity.class);
 
     private static final Map<BlockEntityType<?>, Item> REPRESENTATIVE_ITEMS = new HashMap<>();
@@ -149,7 +149,7 @@ public class AEBaseBlockEntity extends BlockEntity
                     new RegistryFriendlyByteBuf(Unpooled.wrappedBuffer(updateData), registryAccess))) {
                 // Triggers a chunk re-render if the level is already loaded
                 if (level != null) {
-                    requestModelDataUpdate();
+                    //requestModelDataUpdate();
                     level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 0);
                 }
             }
@@ -265,7 +265,7 @@ public class AEBaseBlockEntity extends BlockEntity
 
     public void markForUpdate() {
         // Clearing the cached model-data is always harmless regardless of status
-        this.requestModelDataUpdate();
+        //this.requestModelDataUpdate();
 
         // TODO: Optimize Network Load
         if (this.level != null && !this.isRemoved() && !notLoaded()) {
@@ -305,7 +305,7 @@ public class AEBaseBlockEntity extends BlockEntity
      */
     @ApiStatus.OverrideOnly
     protected void onOrientationChanged(BlockOrientation orientation) {
-        invalidateCapabilities();
+        //invalidateCapabilities();
     }
 
     public final DataComponentMap exportSettings(SettingsFrom mode, @Nullable Player player) {
@@ -420,8 +420,13 @@ public class AEBaseBlockEntity extends BlockEntity
     }
 
     @Override
-    public ModelData getModelData() {
-        return AEModelData.create();
+    public Object getRenderData() {
+        return new AEModelData();
+    }
+
+    @Override
+    public @Nullable Object getRenderAttachmentData() {
+        return new AEModelData();
     }
 
     /**

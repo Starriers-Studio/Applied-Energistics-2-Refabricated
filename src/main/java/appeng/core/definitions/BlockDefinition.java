@@ -20,38 +20,32 @@ package appeng.core.definitions;
 
 import java.util.Objects;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.registries.DeferredBlock;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 
-public class BlockDefinition<T extends Block> implements ItemLike {
-    private final String englishName;
-    private final ItemDefinition<BlockItem> item;
-    private final DeferredBlock<T> block;
-
-    public BlockDefinition(String englishName, DeferredBlock<T> block, ItemDefinition<BlockItem> item) {
+public record BlockDefinition<T extends Block>(String englishName, T block,
+                                               ItemDefinition<BlockItem> item) implements ItemLike {
+    public BlockDefinition(String englishName, T block, ItemDefinition<BlockItem> item) {
         this.englishName = englishName;
         this.item = Objects.requireNonNull(item, "item");
         this.block = Objects.requireNonNull(block, "block");
     }
 
-    public String getEnglishName() {
-        return englishName;
-    }
-
     public ResourceLocation id() {
-        return block.getId();
+        return BuiltInRegistries.BLOCK.getKey(block);
     }
 
-    public final T block() {
-        return this.block.get();
+    @Override
+    public T block() {
+        return this.block;
     }
 
     public ItemStack stack() {
@@ -72,10 +66,6 @@ public class BlockDefinition<T extends Block> implements ItemLike {
 
     public boolean is(AEKey key) {
         return item.is(key);
-    }
-
-    public ItemDefinition<BlockItem> item() {
-        return item;
     }
 
     @Override

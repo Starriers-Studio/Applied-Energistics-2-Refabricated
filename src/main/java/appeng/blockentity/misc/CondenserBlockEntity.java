@@ -18,15 +18,16 @@
 
 package appeng.blockentity.misc;
 
+import dev.architectury.fluid.FluidStack;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.IFluidTank;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import appeng.api.config.CondenserOutput;
 import appeng.api.config.Settings;
@@ -58,7 +59,7 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
     private final AppEngInternalInventory outputSlot = new AppEngInternalInventory(this, 1);
     private final AppEngInternalInventory storageSlot = new AppEngInternalInventory(this, 1);
     private final InternalInventory inputSlot = new CondenseItemHandler();
-    private final IFluidHandler fluidHandler = new FluidHandler();
+    private final Storage<FluidVariant> fluidHandler = Storage.empty();
 
     /**
      * This is used to expose a fake ME subnetwork that is only composed of this condenser. The purpose of this is to
@@ -179,7 +180,7 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
         return externalInv;
     }
 
-    public IFluidHandler getFluidHandler() {
+    public Storage<FluidVariant> getFluidStorage() {
         return fluidHandler;
     }
 
@@ -225,7 +226,7 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
      * A fluid handler that exposes a 1 bucket tank that can only be filled, and - when filled - will add power to this
      * condenser.
      */
-    private class FluidHandler implements IFluidTank, IFluidHandler {
+    private class FluidHandler extends SingleVariantStorage implements IFluidHandler {
 
         @Override
         public FluidStack getFluid() {

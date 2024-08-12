@@ -28,7 +28,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import org.jetbrains.annotations.NotNull;
 
 public enum FuzzyMode implements StringRepresentable {
     /**
@@ -59,8 +59,17 @@ public enum FuzzyMode implements StringRepresentable {
 
     public static final Codec<FuzzyMode> CODEC = StringRepresentable.fromEnum(FuzzyMode::values);
 
-    public static final StreamCodec<FriendlyByteBuf, FuzzyMode> STREAM_CODEC = NeoForgeStreamCodecs
-            .enumCodec(FuzzyMode.class);
+    public static final StreamCodec<FriendlyByteBuf, FuzzyMode> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public @NotNull FuzzyMode decode(FriendlyByteBuf buf) {
+            return buf.readEnum(FuzzyMode.class);
+        }
+
+        @Override
+        public void encode(FriendlyByteBuf buf, @NotNull FuzzyMode value) {
+            buf.writeEnum(value);
+        }
+    };;
 
     public final float breakPoint;
     /**

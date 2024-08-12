@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import appeng.client.render.model.AEModelData;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.Util;
@@ -70,8 +71,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.api.parts.IFacadeContainer;
 import appeng.api.parts.IFacadePart;
@@ -84,8 +83,10 @@ import appeng.client.render.cablebus.CableBusRenderState;
 import appeng.integration.abstraction.IAEFacade;
 import appeng.parts.ICableBusContainer;
 import appeng.parts.NullCableBusContainer;
+import starry.refabricated.ae2.interfaces.*;
 
-public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implements IAEFacade, SimpleWaterloggedBlock {
+public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implements IAEFacade, SimpleWaterloggedBlock,
+        ICustomBlockHitEffect, ICustomBlockDestroyEffect, INeighborChangeSensitive, IDynamicLadder, ICustomPickBlock {
 
     private static final ICableBusContainer NULL_CABLE_BUS = new NullCableBusContainer();
 
@@ -449,13 +450,13 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
     @Override
     public BlockState getAppearance(BlockState state, BlockAndTintGetter renderView, BlockPos pos, Direction side,
             @Nullable BlockState sourceState, @Nullable BlockPos sourcePos) {
-        ModelData modelData;
+        Object modelData;
         if (renderView instanceof ServerLevel serverLevel) {
             // We're on the server, use BE directly
             BlockEntity be = renderView.getBlockEntity(pos);
-            modelData = be != null ? be.getModelData() : ModelData.EMPTY;
+            modelData = be != null ? be.getRenderData() : new Object();
         } else {
-            modelData = renderView.getModelData(pos);
+            modelData = renderView.getBlockEntityRenderData(pos);
         }
 
         CableBusRenderState cableBusRenderState = modelData.get(CableBusRenderState.PROPERTY);

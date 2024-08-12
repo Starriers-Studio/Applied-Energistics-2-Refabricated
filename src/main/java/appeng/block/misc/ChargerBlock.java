@@ -20,6 +20,8 @@ package appeng.block.misc;
 
 import java.util.List;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.joml.Vector3f;
 
 import net.minecraft.client.Minecraft;
@@ -39,8 +41,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.orientation.IOrientationStrategy;
@@ -107,7 +107,7 @@ public class ChargerBlock extends AEBaseEntityBlock<ChargerBlockEntity> {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource r) {
         if (!AEConfig.instance().isEnableEffects()) {
             return;

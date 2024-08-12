@@ -1,12 +1,18 @@
 package appeng.api.ids;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Maps;
 import com.mojang.serialization.Codec;
 
+import com.mojang.serialization.Lifecycle;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 
 import net.minecraft.core.GlobalPos;
@@ -20,7 +26,6 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemContainerContents;
-import net.neoforged.neoforge.registries.DeferredRegister;
 
 import appeng.api.components.ExportedUpgrades;
 import appeng.api.config.FuzzyMode;
@@ -29,7 +34,6 @@ import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 import appeng.api.util.AEColor;
 import appeng.block.crafting.PushDirection;
-import appeng.core.AppEng;
 import appeng.core.definitions.AEItems;
 import appeng.crafting.pattern.EncodedCraftingPattern;
 import appeng.crafting.pattern.EncodedProcessingPattern;
@@ -39,8 +43,8 @@ import appeng.items.storage.SpatialPlotInfo;
 
 public final class AEComponents {
     @ApiStatus.Internal
-    public static final DeferredRegister<DataComponentType<?>> DR = DeferredRegister
-            .create(Registries.DATA_COMPONENT_TYPE, AppEng.MOD_ID);
+    public static final MappedRegistry<DataComponentType<?>> DR = new MappedRegistry<>
+            (Registries.DATA_COMPONENT_TYPE, Lifecycle.experimental());
 
     private AEComponents() {
     }
@@ -298,7 +302,7 @@ public final class AEComponents {
         var builder = DataComponentType.<T>builder();
         customizer.accept(builder);
         var componentType = builder.build();
-        DR.register(name, () -> componentType);
+        Registry.register(DR, name, componentType);
         return componentType;
     }
 }

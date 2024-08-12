@@ -20,6 +20,8 @@ package appeng.blockentity.crafting;
 
 import java.util.List;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import starry.refabricated.ae2.helpers.NetworkHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +38,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -99,7 +98,7 @@ public class MolecularAssemblerBlockEntity extends AENetworkedInvBlockEntity
     private boolean forcePlan = false;
     private boolean reboot = true;
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     private AssemblerAnimationStatus animationStatus;
 
     public MolecularAssemblerBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState blockState) {
@@ -573,12 +572,12 @@ public class MolecularAssemblerBlockEntity extends AENetworkedInvBlockEntity
         return this.isPowered;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public void setAnimationStatus(@Nullable AssemblerAnimationStatus status) {
         this.animationStatus = status;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Nullable
     public AssemblerAnimationStatus getAnimationStatus() {
         return this.animationStatus;

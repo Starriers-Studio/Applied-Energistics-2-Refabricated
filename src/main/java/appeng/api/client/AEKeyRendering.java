@@ -32,6 +32,8 @@ import java.util.Objects;
 import com.google.common.base.Preconditions;
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
@@ -39,8 +41,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
@@ -49,7 +49,7 @@ import appeng.api.stacks.AEKeyType;
  * Registry for {@link AEKeyRenderHandler}. Also contains convenience functions to render a stack without having to
  * query the render handler first.
  */
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class AEKeyRendering {
     private static volatile Map<AEKeyType, AEKeyRenderHandler<?>> renderers = new IdentityHashMap<>();
 

@@ -26,6 +26,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
@@ -36,10 +37,10 @@ import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 
 import appeng.core.AppEng;
 import appeng.init.InitRecipeTypes;
+import org.jetbrains.annotations.NotNull;
 
 public class InscriberRecipe implements Recipe<RecipeInput> {
 
@@ -67,9 +68,23 @@ public class InscriberRecipe implements Recipe<RecipeInput> {
             InscriberRecipe::getSerializedIngredients,
             ItemStack.STREAM_CODEC,
             InscriberRecipe::getResultItem,
-            NeoForgeStreamCodecs.enumCodec(InscriberProcessType.class),
+            enumCodec(InscriberProcessType.class),
             InscriberRecipe::getProcessType,
             InscriberRecipe::new);
+
+    private static <B extends FriendlyByteBuf, V extends Enum<V>> StreamCodec<B, V> enumCodec(Class<V> enumClass) {
+        return new StreamCodec<>() {
+            @Override
+            public @NotNull V decode(B buf) {
+                return buf.readEnum(enumClass);
+            }
+
+            @Override
+            public void encode(@NotNull B buf, @NotNull V value) {
+                buf.writeEnum(value);
+            }
+        };
+    }
 
     public static final ResourceLocation TYPE_ID = AppEng.makeId("inscriber");
 

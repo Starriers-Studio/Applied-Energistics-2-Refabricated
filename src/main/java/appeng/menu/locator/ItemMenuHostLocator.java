@@ -1,7 +1,8 @@
 package appeng.menu.locator;
 
+import net.fabricmc.loader.impl.util.log.Log;
+import net.fabricmc.loader.impl.util.log.LogCategory;
 import org.jetbrains.annotations.Nullable;
-import org.jline.utils.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +28,11 @@ public interface ItemMenuHostLocator extends MenuHostLocator {
             if (hostInterface.isInstance(menuHost)) {
                 return hostInterface.cast(menuHost);
             } else if (menuHost != null) {
-                Log.warn("Item in {} of {} did not create a compatible menu of type {}: {}",
+                Log.warn(LogCategory.LOG, "Item in {} of {} did not create a compatible menu of type {}: {}",
                         this, player, hostInterface, menuHost);
             }
         } else {
-            Log.warn("Item in {} of {} is not an IMenuItem: {}",
+            Log.warn(LogCategory.LOG,"Item in {} of {} is not an IMenuItem: {}",
                     this, player, it);
         }
 

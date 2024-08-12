@@ -21,8 +21,6 @@ package appeng.helpers.patternprovider;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import com.google.common.util.concurrent.Runnables;
 
 import net.minecraft.core.BlockPos;
@@ -39,6 +37,7 @@ import appeng.api.stacks.AEKeyType;
 import appeng.api.storage.MEStorage;
 import appeng.me.storage.CompositeStorage;
 import appeng.parts.automation.StackWorldBehaviors;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Wrapper used by the pattern provider logic to interact with adjacent inventories.
@@ -51,13 +50,13 @@ public interface PatternProviderTarget {
         // our capability first: allows any storage channel
         MEStorage storage;
         if (be != null) {
-            storage = l.getCapability(AECapabilities.ME_STORAGE, be.getBlockPos(), be.getBlockState(), be, side);
+            //storage = l.getCapability(AECapabilities.ME_STORAGE, be.getBlockPos(), be.getBlockState(), be, side);
         } else {
-            storage = l.getCapability(AECapabilities.ME_STORAGE, pos, side);
+            //storage = l.getCapability(AECapabilities.ME_STORAGE, pos, side);
         }
-        if (storage != null) {
-            return wrapMeStorage(storage, src);
-        }
+        //if (storage != null) {
+            //return wrapMeStorage(storage, src);
+        //}
 
         // otherwise fall back to the platform capability
         // TODO: possibly optimize this
