@@ -14,11 +14,25 @@ import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 public interface IItemStackExtended {
 
     private ItemStack self() {
-        return (ItemStack) this;
+        return (ItemStack) (Object) this;
     }
 
-    default boolean doesSneakBypassUse(net.minecraft.world.level.LevelReader level, BlockPos pos, Player player) {
-        //return self().isEmpty() || self().getItem().doesSneakBypassUse(self(), level, pos, player);
+    default InteractionResult onItemUseFirst(UseOnContext context) {
+        Player entityplayer = context.getPlayer();
+        BlockPos blockpos = context.getClickedPos();
+        BlockInWorld state = new BlockInWorld(context.getLevel(), blockpos, false);
+        AdventureModePredicate adventureModePredicate = self().get(DataComponents.CAN_PLACE_ON);
+        if (entityplayer != null && !entityplayer.getAbilities().mayBuild && (adventureModePredicate == null || !adventureModePredicate.test(state))) {
+            return InteractionResult.PASS;
+        } else {
+            Item item = self().getItem();
+            InteractionResult result = ((IItemExtended) item).onItemUseFirst(self(), context);
+            if (entityplayer != null && result == InteractionResult.SUCCESS) {
+                entityplayer.awardStat(Stats.ITEM_USED.get(item));
+            }
+
+            return result;
+        }
     }
 
 }
