@@ -20,6 +20,8 @@ package appeng.items.materials;
 
 import java.util.List;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -28,8 +30,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.parts.IPartHost;
 import appeng.api.parts.SelectedPart;
@@ -40,14 +40,15 @@ import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.PlayerMessages;
 import appeng.items.AEBaseItem;
 import appeng.util.InteractionUtil;
+import refabricated.patches.IItemExtended;
 
-public class UpgradeCardItem extends AEBaseItem {
+public class UpgradeCardItem extends AEBaseItem implements IItemExtended {
 
     public UpgradeCardItem(Properties properties) {
         super(properties);
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines,
             TooltipFlag advancedTooltips) {
@@ -111,6 +112,6 @@ public class UpgradeCardItem extends AEBaseItem {
             }
         }
 
-        return super.onItemUseFirst(stack, context);
+        return IItemExtended.super.onItemUseFirst(stack, context);
     }
 }

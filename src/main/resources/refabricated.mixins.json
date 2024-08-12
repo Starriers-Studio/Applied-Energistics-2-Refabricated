@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8.3",
+  "package": "refabricated.mixins",
+  "compatibilityLevel": "JAVA_11",
+  "mixins": [
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

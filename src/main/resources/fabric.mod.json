@@ -20,7 +20,7 @@
     "rei_client": ["appeng.integration.modules.rei.ReiPlugin"],
     "jade": ["appeng.integration.modules.jade.JadeModule"]
   },
-  "mixins": ["ae2.mixins.json"],
+  "mixins": ["ae2.mixins.json", "refabricated.mixins.json"],
   "depends": {
     "fabricloader": ">=0.16.0",
     "fabric": ">=0.102.0",
@@ -35,6 +35,10 @@
     "waila:plugins": {
       "id": "ae2:wthit",
       "initializer": "appeng.integration.modules.wthit.WthitModule"
+    },
+    "loom:injected_interfaces": {
+      "net/minecraft/class_1792": ["refabricated.patches.IItemExtended"],
+      "net/minecraft/class_1799": ["refabricated.patches.IItemStackExtended"]
     }
   }
 }
