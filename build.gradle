@@ -162,7 +162,7 @@ dependencies {
         exclude group: "net.fabricmc.fabric-api"
     }
 
-    modImplementation("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.config_version}") {
+    include modImplementation("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.config_version}") {
         exclude group: "net.fabricmc"
         exclude group: "net.fabricmc.fabric-api"
     }

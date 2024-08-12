@@ -40,7 +40,7 @@ import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.PlayerMessages;
 import appeng.items.AEBaseItem;
 import appeng.util.InteractionUtil;
-import refabricated.patches.IItemExtended;
+import starry.refabricated.ae2.patches.IItemExtended;
 
 public class UpgradeCardItem extends AEBaseItem implements IItemExtended {
 

@@ -1,4 +1,4 @@
-package refabricated.patches;
+package starry.refabricated.ae2.patches;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;

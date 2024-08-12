@@ -20,6 +20,7 @@ package appeng.blockentity.crafting;
 
 import java.util.List;
 
+import starry.refabricated.ae2.helpers.NetworkHelper;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -466,7 +467,7 @@ public class MolecularAssemblerBlockEntity extends AENetworkedInvBlockEntity
 
                 var item = AEItemKey.of(output);
                 if (item != null) {
-                    PacketDistributor.sendToPlayersNear(node.getLevel(), null, worldPosition.getX(),
+                    NetworkHelper.sendToPlayersNear(node.getLevel(), worldPosition.getX(),
                             worldPosition.getY(),
                             worldPosition.getZ(), 32,
                             new AssemblerAnimationPacket(this.worldPosition, (byte) speed, item));

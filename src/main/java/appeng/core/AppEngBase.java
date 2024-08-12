@@ -21,9 +21,8 @@ package appeng.core;
 import java.util.Collection;
 import java.util.Collections;
 
-import appeng.core.network.CustomAppEngPayload;
 import appeng.hooks.ToolItemHook;
-import appeng.util.NetworkUtil;
+import starry.refabricated.ae2.helpers.NetworkHelper;
 import com.mojang.brigadier.CommandDispatcher;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -125,57 +123,30 @@ public abstract class AppEngBase implements AppEng {
 //        InitStructures.register(modEventBus);
 
 //        modEventBus.addListener(this::registerRegistries);
-//        modEventBus.addListener(MainCreativeTab::initExternal);
-//        modEventBus.addListener(InitNetwork::init);
-//        modEventBus.addListener(ChunkLoadingService.getInstance()::register);
+
+        modEventBus.addListener(ChunkLoadingService.getInstance()::register);
 //        modEventBus.addListener(InitCapabilityProviders::register);
 //        modEventBus.addListener(EventPriority.LOWEST, InitCapabilityProviders::registerGenericAdapters);
-//        modEventBus.addListener((RegisterEvent event) -> {
-//            if (event.getRegistryKey() == Registries.SOUND_EVENT) {
-//                registerSounds(BuiltInRegistries.SOUND_EVENT);
-//            } else if (event.getRegistryKey() == Registries.CREATIVE_MODE_TAB) {
-//                registerCreativeTabs(BuiltInRegistries.CREATIVE_MODE_TAB);
-//            } else if (event.getRegistryKey() == Registries.CUSTOM_STAT) {
-//                InitStats.init(event.getRegistry(Registries.CUSTOM_STAT));
-//            } else if (event.getRegistryKey() == Registries.TRIGGER_TYPE) {
-//                InitAdvancementTriggers.init(event.getRegistry(Registries.TRIGGER_TYPE));
-//            } else if (event.getRegistryKey() == Registries.PARTICLE_TYPE) {
-//                InitParticleTypes.init(event.getRegistry(Registries.PARTICLE_TYPE));
-//            } else if (event.getRegistryKey() == Registries.MENU) {
-//                InitMenuTypes.init(event.getRegistry(Registries.MENU));
-//            } else if (event.getRegistryKey() == Registries.RECIPE_TYPE) {
-//                InitRecipeTypes.init(event.getRegistry(Registries.RECIPE_TYPE));
-//            } else if (event.getRegistryKey() == Registries.RECIPE_SERIALIZER) {
-//                InitRecipeSerializers.init(event.getRegistry(Registries.RECIPE_SERIALIZER));
-//            } else if (event.getRegistryKey() == Registries.RECIPE_SERIALIZER) {
-//                InitRecipeSerializers.init(event.getRegistry(Registries.RECIPE_SERIALIZER));
-//            } else if (event.getRegistryKey() == Registries.CHUNK_GENERATOR) {
-//                Registry.register(BuiltInRegistries.CHUNK_GENERATOR, SpatialStorageDimensionIds.CHUNK_GENERATOR_ID,
-//                        SpatialStorageChunkGenerator.CODEC);
-//            } else if (event.getRegistryKey() == Registries.VILLAGER_PROFESSION) {
-//                InitVillager.initProfession(event.getRegistry(Registries.VILLAGER_PROFESSION));
-//            } else if (event.getRegistryKey() == Registries.POINT_OF_INTEREST_TYPE) {
-//                InitVillager.initPointOfInterestType(event.getRegistry(Registries.POINT_OF_INTEREST_TYPE));
-//            } else if (event.getRegistryKey() == AEKeyType.REGISTRY_KEY) {
-//                registerKeyTypes(event.getRegistry(AEKeyType.REGISTRY_KEY));
-//            }
-//        });
+
+
 
         InitNetwork.init();
 
-        registerCreativeTabs(BuiltInRegistries.CREATIVE_MODE_TAB);
-//        registerDimension();
-//        registerBlocks(BuiltInRegistries.BLOCK);
-//        registerItems(BuiltInRegistries.ITEM);
-//        registerEntities(BuiltInRegistries.ENTITY_TYPE);
-//        registerParticleTypes(BuiltInRegistries.PARTICLE_TYPE);
-//        registerBlockEntities(BuiltInRegistries.BLOCK_ENTITY_TYPE);
-//        registerMenuTypes(BuiltInRegistries.MENU);
-//        registerRecipeSerializers(BuiltInRegistries.RECIPE_SERIALIZER);
-//        registerStructures(BuiltInRegistries.STRUCTURE_TYPE);
         registerSounds(BuiltInRegistries.SOUND_EVENT);
+        registerCreativeTabs(BuiltInRegistries.CREATIVE_MODE_TAB);
+        InitStats.init(BuiltInRegistries.CUSTOM_STAT);
+        InitAdvancementTriggers.init(BuiltInRegistries.TRIGGER_TYPES);
+        InitParticleTypes.init(BuiltInRegistries.PARTICLE_TYPE);
+        InitMenuTypes.init(BuiltInRegistries.MENU);
+        InitRecipeTypes.init(BuiltInRegistries.RECIPE_TYPE);
+        InitRecipeSerializers.init(BuiltInRegistries.RECIPE_SERIALIZER);
+        InitRecipeSerializers.init(BuiltInRegistries.RECIPE_SERIALIZER);
+        Registry.register(BuiltInRegistries.CHUNK_GENERATOR, SpatialStorageDimensionIds.CHUNK_GENERATOR_ID, SpatialStorageChunkGenerator.CODEC);
+        InitVillager.initProfession(BuiltInRegistries.VILLAGER_PROFESSION);
+        InitVillager.initPointOfInterestType(BuiltInRegistries.POINT_OF_INTEREST_TYPE);
+//      registerKeyTypes(event.getRegistry(AEKeyType.REGISTRY_KEY));
 
-        //NeoForge.EVENT_BUS.addListener(InitVillager::initTrades);
+        InitVillager.initTrades();
 
         postRegistrationInitialization();
 
@@ -266,7 +237,7 @@ public abstract class AppEngBase implements AppEng {
     public void sendToAllNearExcept(Player p, double x, double y, double z,
             double dist, Level level, ClientboundPacket packet) {
         if (level instanceof ServerLevel serverLevel) {
-            NetworkUtil.sendToPlayersNear(serverLevel, x, y, z, dist, packet);
+            NetworkHelper.sendToPlayersNear(serverLevel, x, y, z, dist, packet);
         }
     }
 

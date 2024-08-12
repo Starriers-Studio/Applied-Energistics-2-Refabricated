@@ -43,16 +43,11 @@ public final class InitItemColors {
     }
 
     @FunctionalInterface
-    interface ItemColorRegistrar {
+    public interface ItemColorRegistrar {
         void register(ItemColor itemColor, ItemLike... items);
     }
 
-    public static void init(RegisterColorHandlersEvent.Item event) {
-        // Automatically make all registered itemcolors create opaque colors
-        init((itemColor, items) -> event.register(makeOpaque(itemColor), items));
-    }
-
-    private static void init(ItemColorRegistrar registrar) {
+    public static void init(ItemColorRegistrar registrar) {
         // I checked, the ME chest doesn't keep its color in item form
         registrar.register(new StaticItemColor(AEColor.TRANSPARENT), AEBlocks.ME_CHEST.asItem());
 

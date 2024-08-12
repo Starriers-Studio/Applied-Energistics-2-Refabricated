@@ -14,13 +14,26 @@
   "icon": "assets/ae2/logo.png",
   "environment": "*",
   "entrypoints": {
-    "client": ["appeng.core.AppEngClientInitializer"],
-    "server": ["appeng.core.AppEngServerInitializer"],
-    "fabric-datagen": ["appeng.datagen.DatagenEntrypoint"],
-    "rei_client": ["appeng.integration.modules.rei.ReiPlugin"],
-    "jade": ["appeng.integration.modules.jade.JadeModule"]
+    "client": [
+      "starry.refabricated.ae2.AppEngClientInitializer"
+    ],
+    "server": [
+      "starry.refabricated.ae2.AppEngServerInitializer"
+    ],
+    "fabric-datagen": [
+      "appeng.datagen.DatagenEntrypoint"
+    ],
+    "rei_client": [
+      "appeng.integration.modules.rei.ReiPlugin"
+    ],
+    "jade": [
+      "appeng.integration.modules.jade.JadeModule"
+    ]
   },
-  "mixins": ["ae2.mixins.json", "refabricated.mixins.json"],
+  "mixins": [
+    "ae2.mixins.json",
+    "ae2.refabricated.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.16.0",
     "fabric": ">=0.102.0",
@@ -29,7 +42,6 @@
   "conflicts": {
     "appliedenergistics2": "*"
   },
-  "suggests": {},
   "accessWidener": "ae2.accesswidener",
   "custom": {
     "waila:plugins": {

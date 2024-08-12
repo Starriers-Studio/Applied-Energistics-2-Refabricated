@@ -25,6 +25,7 @@ import java.util.Objects;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import org.joml.Quaternionf;
 
 import net.minecraft.client.Minecraft;
@@ -48,19 +49,14 @@ public class OverlayManager {
         return INSTANCE;
     }
 
-    @SubscribeEvent
-    public void renderWorldLastEvent(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
-            return;
-        }
-
+    public void renderWorldLastEvent(WorldRenderContext context) {
         if (overlayHandlers.isEmpty()) {
             return;
         }
 
         Minecraft minecraft = Minecraft.getInstance();
         BufferSource buffer = minecraft.renderBuffers().bufferSource();
-        PoseStack poseStack = event.getPoseStack();
+        PoseStack poseStack = context.matrixStack();
 
         poseStack.pushPose();
 

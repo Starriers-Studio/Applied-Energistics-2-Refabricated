@@ -18,10 +18,9 @@
 
 package appeng.init.client;
 
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.event.ModelEvent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 
 import appeng.api.parts.PartModelsInternal;
 import appeng.client.render.crafting.MolecularAssemblerRenderer;
@@ -30,16 +29,16 @@ import appeng.client.render.tesr.CrankRenderer;
 /**
  * Registers any JSON model files with Minecraft that are not referenced via blockstates or item IDs
  */
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class InitAdditionalModels {
 
-    public static void init(ModelEvent.RegisterAdditional event) {
-        event.register(MolecularAssemblerRenderer.LIGHTS_MODEL);
-        event.register(CrankRenderer.BASE_MODEL);
-        event.register(CrankRenderer.HANDLE_MODEL);
+    public static void init() {
+        ModelLoadingPlugin.register(context -> {
+            context.addModels(MolecularAssemblerRenderer.LIGHTS_MODEL.id(), CrankRenderer.BASE_MODEL.id(), CrankRenderer.HANDLE_MODEL.id());
 
-        PartModelsInternal.freeze();
-        PartModelsInternal.getModels().stream().map(ModelResourceLocation::standalone).forEach(event::register);
+            PartModelsInternal.freeze();
+            PartModelsInternal.getModels().forEach(context::addModels);
+        });
     }
 
 }

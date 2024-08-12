@@ -17,6 +17,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
+import net.fabricmc.fabric.api.resource.ModResourcePack;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
+import net.fabricmc.fabric.impl.resource.loader.ModResourcePackCreator;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -40,13 +48,6 @@ import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.level.validation.DirectoryValidator;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
-import net.neoforged.neoforge.client.event.ScreenEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.resource.ResourcePackLoader;
 
 import appeng.client.guidebook.compiler.PageCompiler;
 import appeng.client.guidebook.compiler.ParsedGuidePage;
@@ -109,27 +110,14 @@ public final class Guide implements PageCollection {
         return indexClass.cast(index);
     }
 
-    public static Builder builder(IEventBus modEventBus, String defaultNamespace, String folder) {
-        return new Builder(modEventBus, defaultNamespace, folder);
-    }
-
-    /**
-     * Creates a build without listening for mod events. This disables all features that rely on being able to register
-     * mod events, such as {@linkplain Builder#registerReloadListener the reload listener},
-     * {@linkplain Builder#validateAllAtStartup validation} or the {@linkplain Builder#startupPage startup page}.
-     */
     public static Builder builder(String defaultNamespace, String folder) {
-        return new Builder(null, defaultNamespace, folder)
-                .registerReloadListener(false)
-                .validateAllAtStartup(false)
-                .startupPage(null);
+        return new Builder(defaultNamespace, folder);
     }
 
-    private static CompletableFuture<Minecraft> afterClientStart(IEventBus modEventBus) {
+    private static CompletableFuture<Minecraft> afterClientStart() {
         var future = new CompletableFuture<Minecraft>();
 
-        modEventBus.addListener((FMLClientSetupEvent evt) -> {
-            var client = Minecraft.getInstance();
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             CompletableFuture<?> reload;
 
             if (client.getOverlay() instanceof LoadingOverlay loadingOverlay) {
@@ -157,9 +145,9 @@ public final class Guide implements PageCollection {
             var layeredAccess = RegistryLayer.createRegistryAccess();
 
             PackRepository packRepository = new PackRepository(
-                    new ServerPacksSource(new DirectoryValidator(path -> false)));
-            // This fires AddPackFindersEvent but it's probably ok.
-            ResourcePackLoader.populatePackRepository(packRepository, PackType.SERVER_DATA, true);
+                    new ServerPacksSource(new DirectoryValidator(path -> false)),
+                    new ModResourcePackCreator(PackType.SERVER_DATA)
+            );
             packRepository.reload();
             packRepository.setSelected(packRepository.getAvailableIds());
 
@@ -289,11 +277,16 @@ public final class Guide implements PageCollection {
         return extensions;
     }
 
-    private class ReloadListener extends SimplePreparableReloadListener<Map<ResourceLocation, ParsedGuidePage>> {
+    private class ReloadListener extends SimplePreparableReloadListener<Map<ResourceLocation, ParsedGuidePage>> implements IdentifiableResourceReloadListener {
         private final ResourceLocation id;
 
         public ReloadListener(ResourceLocation id) {
             this.id = id;
+        }
+
+        @Override
+        public ResourceLocation getFabricId() {
+            return id;
         }
 
         @Override
@@ -350,7 +343,7 @@ public final class Guide implements PageCollection {
     private void watchDevelopmentSources() {
         var watcher = new GuideSourceWatcher(developmentSourceNamespace, developmentSourceFolder);
 
-        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Pre evt) -> {
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
             var changes = watcher.takeChanges();
             if (!changes.isEmpty()) {
                 applyChanges(changes);
@@ -408,8 +401,6 @@ public final class Guide implements PageCollection {
     }
 
     public static class Builder {
-        @Nullable
-        private final IEventBus modEventBus;
         private final String defaultNamespace;
         private final String folder;
         private final Map<Class<?>, PageIndex> indices = new IdentityHashMap<>();
@@ -425,8 +416,7 @@ public final class Guide implements PageCollection {
         private final Set<ExtensionPoint<?>> disableDefaultsForExtensionPoints = Collections
                 .newSetFromMap(new IdentityHashMap<>());
 
-        private Builder(@Nullable IEventBus modEventBus, String defaultNamespace, String folder) {
-            this.modEventBus = modEventBus;
+        private Builder(String defaultNamespace, String folder) {
             this.defaultNamespace = Objects.requireNonNull(defaultNamespace, "defaultNamespace");
             this.folder = Objects.requireNonNull(folder, "folder");
 
@@ -589,11 +579,7 @@ public final class Guide implements PageCollection {
                     indices, extensionCollection);
 
             if (registerReloadListener) {
-                if (this.modEventBus == null) {
-                    throw new IllegalStateException(
-                            "Cannot register the reload listener, since no mod event bus was supplied to the builder.");
-                }
-                guide.registerReloadListener(modEventBus);
+                guide.registerReloadListener();
             }
 
             if (developmentSourceFolder != null && watchDevelopmentSources) {
@@ -601,20 +587,16 @@ public final class Guide implements PageCollection {
             }
 
             if (validateAtStartup || startupPage != null) {
-                if (this.modEventBus == null) {
-                    throw new IllegalStateException(
-                            "Cannot enable the startup page/validation, since no mod event bus was supplied to the builder.");
-                }
                 var guideOpenedOnce = new MutableBoolean(false);
-                NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
-                    if (e.getNewScreen() instanceof TitleScreen && !guideOpenedOnce.booleanValue()) {
+                ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+                    if (screen instanceof TitleScreen && !guideOpenedOnce.booleanValue()) {
                         guideOpenedOnce.setTrue();
                         runDatapackReload();
                         if (validateAtStartup) {
                             guide.validateAll();
                         }
                         if (startupPage != null) {
-                            e.setNewScreen(GuideScreen.openNew(guide, PageAnchor.page(startupPage),
+                            client.setScreen(GuideScreen.openNew(guide, PageAnchor.page(startupPage),
                                     GlobalInMemoryHistory.INSTANCE));
                         }
                     }
@@ -645,10 +627,8 @@ public final class Guide implements PageCollection {
         }
     }
 
-    private void registerReloadListener(IEventBus modEventBus) {
-        modEventBus.addListener((RegisterClientReloadListenersEvent evt) -> {
-            evt.registerReloadListener(
-                    new ReloadListener(ResourceLocation.fromNamespaceAndPath(defaultNamespace, folder)));
-        });
+    private void registerReloadListener() {
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES)
+                .registerReloadListener(new ReloadListener(ResourceLocation.fromNamespaceAndPath(defaultNamespace, folder)));
     }
 }

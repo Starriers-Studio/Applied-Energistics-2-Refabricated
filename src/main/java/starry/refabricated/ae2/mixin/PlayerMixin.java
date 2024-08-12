@@ -1,4 +1,4 @@
-package appeng.mixins;
+package starry.refabricated.ae2.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,8 +10,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import appeng.hooks.SkyStoneBreakSpeed;
 
-@Mixin(value = Player.class)
-public class BreakSpeedMixin {
+@Mixin(Player.class)
+public class PlayerMixin {
     @SuppressWarnings("ConstantConditions")
     @Inject(method = "getDestroySpeed", at = @At("RETURN"), cancellable = true)
     public void modifyBreakSpeed(BlockState blockState, CallbackInfoReturnable<Float> cri) {

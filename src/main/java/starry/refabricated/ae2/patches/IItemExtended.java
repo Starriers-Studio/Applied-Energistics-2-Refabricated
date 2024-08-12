@@ -1,4 +1,4 @@
-package refabricated.patches;
+package starry.refabricated.ae2.patches;
 
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
