@@ -14,8 +14,8 @@
   "icon": "assets/ae2/logo.png",
   "environment": "*",
   "entrypoints": {
-    "client": ["appeng.core.AppEngClientStartup"],
-    "server": ["appeng.core.AppEngServerStartup"],
+    "client": ["appeng.core.AppEngClientInitializer"],
+    "server": ["appeng.core.AppEngServerInitializer"],
     "fabric-datagen": ["appeng.datagen.DatagenEntrypoint"],
     "rei_client": ["appeng.integration.modules.rei.ReiPlugin"],
     "jade": ["appeng.integration.modules.jade.JadeModule"]

@@ -22,9 +22,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 
-import net.neoforged.fml.ModContainer;
+import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
+import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeModConfigEvents;
+
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
 import net.neoforged.neoforge.common.ModConfigSpec.DoubleValue;
@@ -51,26 +52,23 @@ public final class AEConfig {
 
     private static AEConfig instance;
 
-    private AEConfig(ModContainer container) {
-        container.registerConfig(ModConfig.Type.CLIENT, client.spec);
-        container.registerConfig(ModConfig.Type.COMMON, common.spec);
-        container.getEventBus().addListener((ModConfigEvent.Loading evt) -> {
-            if (evt.getConfig().getSpec() == common.spec) {
+    private AEConfig(String modId) {
+        NeoForgeConfigRegistry.INSTANCE.register(modId, ModConfig.Type.CLIENT, client.spec);
+        NeoForgeConfigRegistry.INSTANCE.register(modId, ModConfig.Type.COMMON, common.spec);
+        NeoForgeModConfigEvents.loading(modId).register(config -> {
+            if (config.getSpec() == common.spec) {
                 common.sync();
             }
         });
-        container.getEventBus().addListener((ModConfigEvent.Reloading evt) -> {
-            if (evt.getConfig().getSpec() == common.spec) {
+        NeoForgeModConfigEvents.reloading(modId).register(config -> {
+            if (config.getSpec() == common.spec) {
                 common.sync();
             }
         });
     }
 
-    public static void register(ModContainer container) {
-        if (!container.getModId().equals(AppEng.MOD_ID)) {
-            throw new IllegalArgumentException();
-        }
-        instance = new AEConfig(container);
+    public static void register(String modId) {
+        instance = new AEConfig(modId);
     }
 
     // Tunnels
