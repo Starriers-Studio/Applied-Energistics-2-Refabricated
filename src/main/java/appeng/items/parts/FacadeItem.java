@@ -18,6 +18,7 @@
 
 package appeng.items.parts;
 
+import appeng.hooks.AEToolItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -48,9 +49,8 @@ import appeng.core.AEConfig;
 import appeng.core.definitions.AEItems;
 import appeng.facade.FacadePart;
 import appeng.items.AEBaseItem;
-import starry.refabricated.ae2.patches.IItemExtended;
 
-public class FacadeItem extends AEBaseItem implements IFacadeItem, IItemExtended {
+public class FacadeItem extends AEBaseItem implements IFacadeItem, AEToolItem {
 
     public FacadeItem(Properties properties) {
         super(properties);

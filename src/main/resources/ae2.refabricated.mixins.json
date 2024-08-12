@@ -6,14 +6,16 @@
   "mixins": [
     "MinecraftServerMixin",
     "PlayerMixin",
-    "ServerLevelMixin"
+    "ServerLevelMixin",
+    "ServerPlayerGameModeMixin"
   ],
   "server": [],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
-    "client.MouseHandlerMixin",
-    "client.ItemInHandRendererMixin"
+    "MultiPlayerGameModeMixin",
+    "client.ItemInHandRendererMixin",
+    "client.MouseHandlerMixin"
   ]
 }

@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
+import appeng.hooks.AEToolItem;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -64,7 +65,7 @@ import appeng.util.inv.AppEngInternalInventory;
 import appeng.util.inv.InternalInventoryHost;
 import appeng.util.inv.filter.IAEItemFilter;
 
-public class NetworkToolItem extends AEBaseItem implements IMenuItem {
+public class NetworkToolItem extends AEBaseItem implements IMenuItem, AEToolItem {
 
     public NetworkToolItem(Properties properties) {
         super(properties);

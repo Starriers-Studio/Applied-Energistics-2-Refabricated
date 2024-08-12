@@ -20,6 +20,7 @@ package appeng.items.materials;
 
 import java.util.List;
 
+import appeng.hooks.AEToolItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
@@ -40,9 +41,8 @@ import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.PlayerMessages;
 import appeng.items.AEBaseItem;
 import appeng.util.InteractionUtil;
-import starry.refabricated.ae2.patches.IItemExtended;
 
-public class UpgradeCardItem extends AEBaseItem implements IItemExtended {
+public class UpgradeCardItem extends AEBaseItem implements AEToolItem {
 
     public UpgradeCardItem(Properties properties) {
         super(properties);
@@ -112,6 +112,6 @@ public class UpgradeCardItem extends AEBaseItem implements IItemExtended {
             }
         }
 
-        return IItemExtended.super.onItemUseFirst(stack, context);
+        return AEToolItem.super.onItemUseFirst(stack, context);
     }
 }
