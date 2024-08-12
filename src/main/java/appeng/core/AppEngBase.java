@@ -165,6 +165,8 @@ public abstract class AppEngBase implements AppEng {
 //            }
 //        });
 
+        InitNetwork.init();
+
         registerCreativeTabs(BuiltInRegistries.CREATIVE_MODE_TAB);
 //        registerDimension();
 //        registerBlocks(BuiltInRegistries.BLOCK);
