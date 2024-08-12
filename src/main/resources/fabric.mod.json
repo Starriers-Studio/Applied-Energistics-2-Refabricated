@@ -49,8 +49,8 @@
       "initializer": "appeng.integration.modules.wthit.WthitModule"
     },
     "loom:injected_interfaces": {
-      "net/minecraft/class_1792": ["refabricated.patches.IItemExtended"],
-      "net/minecraft/class_1799": ["refabricated.patches.IItemStackExtended"]
+      "net/minecraft/class_1792": ["starry/refabricated/ae2/patches/IItemExtended"],
+      "net/minecraft/class_1799": ["starry/refabricated/ae2/patches/IItemStackExtended"]
     }
   }
 }
