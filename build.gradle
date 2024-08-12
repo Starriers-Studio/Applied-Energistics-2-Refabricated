@@ -310,13 +310,6 @@ loom {
         server {
             server()
         }
-        datagen {
-            client()
-            property("fabric-api.datagen")
-            property("appeng.version", project.version)
-            property("fabric-api.datagen.output-dir", file("src/generated/resources").absolutePath)
-            property("appeng.datagen.existingData", file("src/main/resources").absolutePath)
-        }
         guideexport {
             client()
             property("appeng.runGuideExportAndExit", "true")
