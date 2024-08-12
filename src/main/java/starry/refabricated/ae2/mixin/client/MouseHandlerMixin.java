@@ -1,4 +1,4 @@
-package starry.refabricated.ae2.mixin;
+package starry.refabricated.ae2.mixin.client;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

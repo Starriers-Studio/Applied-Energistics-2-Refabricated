@@ -21,13 +21,13 @@ package appeng.items.tools.powered.powersink;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -35,8 +35,9 @@ import appeng.api.ids.AEComponents;
 import appeng.api.implementations.items.IAEItemPowerStorage;
 import appeng.core.localization.Tooltips;
 import appeng.items.AEBaseItem;
+import starry.refabricated.ae2.patches.IItemExtended;
 
-public abstract class AEBasePoweredItem extends AEBaseItem implements IAEItemPowerStorage {
+public abstract class AEBasePoweredItem extends AEBaseItem implements IAEItemPowerStorage, IItemExtended {
     // Any energy capacity below this threshold will be clamped to zero
     private static final double MIN_POWER = 0.0001;
     private final DoubleSupplier powerCapacity;
@@ -46,7 +47,7 @@ public abstract class AEBasePoweredItem extends AEBaseItem implements IAEItemPow
         this.powerCapacity = powerCapacity;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines,
             TooltipFlag advancedTooltips) {

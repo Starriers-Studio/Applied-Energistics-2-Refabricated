@@ -22,6 +22,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +33,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.ids.AEComponents;
 import appeng.api.implementations.items.ISpatialStorageCell;
@@ -55,7 +55,7 @@ public class SpatialStorageCellItem extends AEBaseItem implements ISpatialStorag
         this.maxRegion = spatialScale;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines,
             TooltipFlag advancedTooltips) {
