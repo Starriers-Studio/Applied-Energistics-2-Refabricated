@@ -48,8 +48,9 @@ import appeng.core.AEConfig;
 import appeng.core.definitions.AEItems;
 import appeng.facade.FacadePart;
 import appeng.items.AEBaseItem;
+import starry.refabricated.ae2.patches.IItemExtended;
 
-public class FacadeItem extends AEBaseItem implements IFacadeItem {
+public class FacadeItem extends AEBaseItem implements IFacadeItem, IItemExtended {
 
     public FacadeItem(Properties properties) {
         super(properties);

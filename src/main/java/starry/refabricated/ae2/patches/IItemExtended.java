@@ -10,4 +10,8 @@ public interface IItemExtended {
         return InteractionResult.PASS;
     }
 
+    default boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return !oldStack.equals(newStack); // !ItemStack.areItemStacksEqual(oldStack, newStack);
+    }
+
 }
