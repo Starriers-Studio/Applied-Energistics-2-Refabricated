@@ -24,10 +24,10 @@ import java.util.List;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 
 import appeng.api.ids.AECreativeTabIds;
 import appeng.block.AEBaseBlock;
@@ -44,18 +44,12 @@ public final class MainCreativeTab {
     private static final List<ItemDefinition<?>> itemDefs = new ArrayList<>();
 
     public static void init(Registry<CreativeModeTab> registry) {
-        var tab = CreativeModeTab.builder()
+        var tab = FabricItemGroup.builder()
                 .title(GuiText.CreativeTab.text())
                 .icon(() -> AEBlocks.CONTROLLER.stack(1))
                 .displayItems(MainCreativeTab::buildDisplayItems)
                 .build();
         Registry.register(registry, AECreativeTabIds.MAIN, tab);
-    }
-
-    public static void initExternal(BuildCreativeModeTabContentsEvent contents) {
-        for (var itemDefinition : externalItemDefs.get(contents.getTabKey())) {
-            contents.accept(itemDefinition);
-        }
     }
 
     public static void add(ItemDefinition<?> itemDef) {

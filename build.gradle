@@ -162,6 +162,11 @@ dependencies {
         exclude group: "net.fabricmc.fabric-api"
     }
 
+    modImplementation("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.config_version}") {
+        exclude group: "net.fabricmc"
+        exclude group: "net.fabricmc.fabric-api"
+    }
+
     // unit test dependencies
     testImplementation(platform("org.junit:junit-bom:${project.junit_version}"))
     testImplementation(platform("org.assertj:assertj-bom:${project.assertj_version}"))
@@ -233,6 +238,13 @@ allprojects {
             url = "https://maven.blamejared.com/"
             content {
                 includeGroup "mezz.jei"
+            }
+        }
+        maven {
+            name = "Fuzs Mod Resources"
+            url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+            content {
+                includeGroup "fuzs.forgeconfigapiport"
             }
         }
         mavenCentral()

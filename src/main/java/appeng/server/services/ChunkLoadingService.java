@@ -45,11 +45,11 @@ public class ChunkLoadingService implements LoadingValidationCallback {
         event.register(controller);
     }
 
-    public void onServerAboutToStart(ServerAboutToStartEvent evt) {
+    public void onServerAboutToStart() {
         this.running = true;
     }
 
-    public void onServerStopping(ServerStoppingEvent event) {
+    public void onServerStopping() {
         this.running = false;
     }
 

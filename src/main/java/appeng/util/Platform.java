@@ -25,9 +25,16 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import appeng.core.AppEng;
 import com.google.common.annotations.VisibleForTesting;
 import com.mojang.authlib.GameProfile;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.entity.FakePlayer;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
@@ -54,11 +61,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluid;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.util.thread.SidedThreadGroups;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.fluids.FluidStack;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.PowerUnit;
@@ -73,8 +75,7 @@ import appeng.util.helpers.P2PHelper;
 
 public class Platform {
 
-    @VisibleForTesting
-    public static ThreadGroup serverThreadGroup = SidedThreadGroups.SERVER;
+    public static final FabricLoader FABRIC = FabricLoader.getInstance();
 
     private static final P2PHelper P2P_HELPER = new P2PHelper();
 
@@ -195,14 +196,15 @@ public class Platform {
      */
     public static boolean hasClientClasses() {
         // The null check is for tests
-        return FMLEnvironment.dist == null || FMLEnvironment.dist.isClient();
+        return FABRIC.getEnvironmentType() == EnvType.CLIENT;
     }
 
     /*
      * returns true if the code is on the client.
      */
     public static boolean isClient() {
-        return Thread.currentThread().getThreadGroup() != SidedThreadGroups.SERVER;
+        var currentServer = AppEng.instance().getCurrentServer();
+        return currentServer == null || Thread.currentThread() != currentServer.getRunningThread();
     }
 
     public static boolean hasPermissions(DimensionalBlockPos dc, Player player) {
@@ -227,14 +229,21 @@ public class Platform {
      * returns true if the code is on the server.
      */
     public static boolean isServer() {
-        return Thread.currentThread().getThreadGroup() == SidedThreadGroups.SERVER;
+        try {
+            var currentServer = AppEng.instance().getCurrentServer();
+            return currentServer != null && Thread.currentThread() == currentServer.getRunningThread();
+        } catch (NullPointerException npe) {
+            // FIXME TEST HACKS
+            // Running from tests: AppEng.instance() is null... :(
+            return false;
+        }
     }
 
     /**
      * Throws an exception if the current thread is not one of the server threads.
      */
     public static void assertServerThread() {
-        if (Thread.currentThread().getThreadGroup() != serverThreadGroup) {
+        if (!isServer()) {
             throw new UnsupportedOperationException(
                     "This code can only be called server-side and this is most likely a bug.");
         }
@@ -246,13 +255,12 @@ public class Platform {
 
     @Nullable
     public static String getModName(String modId) {
-        return ModList.get().getModContainerById(modId).map(mc -> mc.getModInfo().getDisplayName())
+        return FABRIC.getModContainer(modId).map(mc -> mc.getMetadata().getName())
                 .orElse(modId);
     }
 
     public static Component getFluidDisplayName(Fluid fluid) {
-        var fluidStack = new FluidStack(fluid, 1);
-        return fluidStack.getHoverName();
+        return FluidVariantAttributes.getName(FluidVariant.of(fluid));
     }
 
     public static boolean isChargeable(ItemStack i) {
@@ -275,7 +283,7 @@ public class Platform {
             playerUuid = DEFAULT_FAKE_PLAYER_UUID;
         }
 
-        return FakePlayerFactory.get(level, new GameProfile(playerUuid, "[AE2]"));
+        return FakePlayer.get(level, new GameProfile(playerUuid, "[AE2]"));
     }
 
     public static Direction rotateAround(Direction forward, Direction axis) {
@@ -393,7 +401,7 @@ public class Platform {
      * @return True if AE2 is being run within a dev environment.
      */
     public static boolean isDevelopmentEnvironment() {
-        return !FMLEnvironment.production;
+        return FABRIC.isDevelopmentEnvironment();
     }
 
     /**

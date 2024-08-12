@@ -23,6 +23,7 @@ import java.util.Objects;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
+import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.client.ConfigScreenFactoryRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,6 @@ import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -128,7 +128,6 @@ import appeng.util.Platform;
 /**
  * Client-specific functionality.
  */
-@Mod(value = AppEng.MOD_ID, dist = Dist.CLIENT)
 public class AppEngClient extends AppEngBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppEngClient.class);
 
@@ -149,7 +148,7 @@ public class AppEngClient extends AppEngBase {
 
     private final Guide guide;
 
-    public AppEngClient(IEventBus modEventBus, ModContainer container) {
+    public AppEngClient() {
         super(modEventBus, container);
         InitBuiltInModels.init();
 
@@ -191,8 +190,7 @@ public class AppEngClient extends AppEngBase {
             Hotkeys.checkHotkeys();
         });
 
-        container.registerExtensionPoint(IConfigScreenFactory.class,
-                (mc, parent) -> new ConfigurationScreen(container, parent));
+        ConfigScreenFactoryRegistry.INSTANCE.register("ae2", (string, screen) -> new ConfigurationScreen("ae2", screen));
     }
 
     private void enqueueImcMessages(InterModEnqueueEvent event) {
