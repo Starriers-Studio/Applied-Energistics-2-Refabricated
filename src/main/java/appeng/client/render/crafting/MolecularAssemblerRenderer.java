@@ -21,6 +21,8 @@ package appeng.client.render.crafting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -34,9 +36,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.blockentity.crafting.MolecularAssemblerBlockEntity;
 import appeng.client.render.effects.ParticleTypes;
@@ -46,11 +45,10 @@ import appeng.core.AppEngClient;
 /**
  * Renders the item currently being crafted by the molecular assembler, as well as the light strip when it's powered.
  */
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class MolecularAssemblerRenderer implements BlockEntityRenderer<MolecularAssemblerBlockEntity> {
 
-    public static final ModelResourceLocation LIGHTS_MODEL = ModelResourceLocation
-            .standalone(AppEng.makeId("block/molecular_assembler_lights"));
+    public static final ModelResourceLocation LIGHTS_MODEL = ModelResourceLocation.inventory(AppEng.makeId("block/molecular_assembler_lights"));
 
     private final RandomSource particleRandom = RandomSource.create();
 
@@ -91,7 +89,7 @@ public class MolecularAssemblerRenderer implements BlockEntityRenderer<Molecular
 
         // certainly doesn't use alpha testing, making it look like it will not work.
         minecraft.getBlockRenderer().getModelRenderer().renderModel(ms.last(), buffer, null,
-                lightsModel, 1, 1, 1, combinedLightIn, combinedOverlayIn, ModelData.EMPTY, null);
+                lightsModel, 1, 1, 1, combinedLightIn, combinedOverlayIn);
     }
 
     private void renderStatus(MolecularAssemblerBlockEntity molecularAssembler, PoseStack ms,

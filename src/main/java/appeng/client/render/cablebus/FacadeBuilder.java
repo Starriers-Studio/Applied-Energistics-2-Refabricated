@@ -28,6 +28,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import appeng.block.networking.CableBusBlock;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
@@ -46,7 +55,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.api.parts.PartHelper;
 import appeng.api.util.AEAxisAlignedBB;
@@ -56,13 +64,6 @@ import appeng.thirdparty.codechicken.lib.model.pipeline.transformers.QuadCornerK
 import appeng.thirdparty.codechicken.lib.model.pipeline.transformers.QuadFaceStripper;
 import appeng.thirdparty.codechicken.lib.model.pipeline.transformers.QuadReInterpolator;
 import appeng.thirdparty.codechicken.lib.model.pipeline.transformers.QuadTinter;
-import appeng.thirdparty.fabric.Mesh;
-import appeng.thirdparty.fabric.MeshBuilder;
-import appeng.thirdparty.fabric.MeshBuilderImpl;
-import appeng.thirdparty.fabric.ModelHelper;
-import appeng.thirdparty.fabric.QuadEmitter;
-import appeng.thirdparty.fabric.RenderContext;
-import appeng.thirdparty.fabric.Renderer;
 
 /**
  * The FacadeBuilder builds for facades..
@@ -71,7 +72,7 @@ import appeng.thirdparty.fabric.Renderer;
  */
 public class FacadeBuilder {
 
-    private final Renderer renderer = Renderer.getInstance();
+    private final Renderer renderer = RendererAccess.INSTANCE.getRenderer();
 
     // Slightly smaller than a pixel to never show the beginning of the second row of pixels of the block's texture.
     public static final double THIN_THICKNESS = 1D / 16D - 2e-3;
@@ -100,7 +101,7 @@ public class FacadeBuilder {
             List<BakedQuad> partQuads = transparentFacadeModel.getQuads(null, null, RandomSource.create());
 
             for (Direction facing : Direction.values()) {
-                MeshBuilder meshBuilder = new MeshBuilderImpl();
+                MeshBuilder meshBuilder = renderer.meshBuilder();
                 QuadEmitter emitter = meshBuilder.getEmitter();
 
                 // Rotate quads accordingly
@@ -110,8 +111,6 @@ public class FacadeBuilder {
                     emitter.fromVanilla(quad.getVertices(), 0);
                     emitter.cullFace(null);
                     emitter.nominalFace(quad.getDirection());
-                    emitter.shade(quad.isShade());
-                    emitter.ambientOcclusion(quad.hasAmbientOcclusion());
                     if (!rotator.transform(emitter)) {
                         continue;
                     }
@@ -124,7 +123,7 @@ public class FacadeBuilder {
             // This constructor is used for item models where transparent facades are not a
             // concern
             for (Direction facing : Direction.values()) {
-                this.transparentFacadeQuads.put(facing, new MeshBuilderImpl().build());
+                this.transparentFacadeQuads.put(facing, renderer.meshBuilder().build());
             }
         }
     }
@@ -157,8 +156,6 @@ public class FacadeBuilder {
                         emitter.fromVanilla(quad.getVertices(), 0);
                         emitter.cullFace(cullFace);
                         emitter.nominalFace(quad.getDirection());
-                        emitter.shade(quad.isShade());
-                        emitter.ambientOcclusion(quad.hasAmbientOcclusion());
                         if (!rotator.transform(emitter)) {
                             continue;
                         }
@@ -173,8 +170,7 @@ public class FacadeBuilder {
         return stems;
     }
 
-    public Mesh getFacadeMesh(CableBusRenderState renderState, Supplier<RandomSource> rand,
-            BlockAndTintGetter level, EnumMap<Direction, ModelData> facadeModelData, @Nullable RenderType renderType) {
+    public Mesh getFacadeMesh(CableBusRenderState renderState, Supplier<RandomSource> rand, BlockAndTintGetter level, RenderContext context) {
         boolean transparent = PartHelper.getCableRenderMode().transparentFacades;
         Map<Direction, FacadeRenderState> facadeStates = renderState.getFacades();
         List<AABB> partBoxes = renderState.getBoundingBoxes();
@@ -209,14 +205,6 @@ public class FacadeBuilder {
             }
 
             BlockState blockState = facadeRenderState.getSourceBlock();
-            var dispatcher = Minecraft.getInstance().getBlockRenderer();
-            var model = dispatcher.getBlockModel(blockState);
-            var modelData = Objects.requireNonNullElse(facadeModelData.get(side), ModelData.EMPTY);
-
-            // If we aren't forcing transparency let the model decide if it should render.
-            if (renderType != null && !model.getRenderTypes(blockState, rand.get(), modelData).contains(renderType)) {
-                continue;
-            }
 
             AABB fullBounds = THIN_FACADE_BOXES[sideIndex];
             AABB facadeBox = fullBounds;
@@ -265,6 +253,9 @@ public class FacadeBuilder {
             List<AABB> holeStrips = getBoxes(facadeBox, cutOutBox, side.getAxis());
             var facadeAccess = new FacadeBlockAccess(level, pos, side, blockState);
 
+            var dispatcher = Minecraft.getInstance().getBlockRenderer();
+            var model = (FabricBakedModel) dispatcher.getBlockModel(blockState);
+
             QuadFaceStripper faceStripper = new QuadFaceStripper(fullBounds, facadeMask);
             // Setup the kicker.
             QuadCornerKicker kicker = new QuadCornerKicker();
@@ -275,38 +266,36 @@ public class FacadeBuilder {
 
             QuadReInterpolator interpolator = new QuadReInterpolator();
 
-            for (int cullFaceIdx = 0; cullFaceIdx <= ModelHelper.NULL_FACE_ID; cullFaceIdx++) {
-                Direction cullFace = ModelHelper.faceFromIndex(cullFaceIdx);
-                List<BakedQuad> quads = model.getQuads(blockState, cullFace, rand.get(), modelData, renderType);
-
-                // Ignore quad if it's not supposed to connect to the adjacent block.
-                if (cullFace != null) {
-                    BlockPos adjPos = pos.relative(cullFace);
-                    BlockState adjState = level.getBlockState(adjPos).getAppearance(level, adjPos,
-                            cullFace.getOpposite(), blockState, pos);
-
-                    if (blockState.skipRendering(adjState, cullFace)) {
-                        continue;
-                    }
-                }
-
-                for (BakedQuad quad : quads) {
+            CableBusBlock.RENDERING_FACADE_DIRECTION.set(side);
+            try {
+                context.pushTransform(quad -> {
+                    Direction cullFace = quad.cullFace();
                     QuadTinter quadTinter = null;
 
+                    // Ignore quad if it's not supposed to connect to the adjacent block.
+                    if (cullFace != null) {
+                        BlockPos adjPos = pos.relative(cullFace);
+                        BlockState adjState = level.getBlockState(adjPos).getAppearance(level, adjPos,
+                                cullFace.getOpposite(), blockState, pos);
+
+                        if (blockState.skipRendering(adjState, cullFace)) {
+                            return false;
+                        }
+                    }
+
                     // Prebake the color tint into the quad
-                    if (quad.getTintIndex() != -1) {
+                    if (quad.colorIndex() != -1) {
                         quadTinter = new QuadTinter(
-                                blockColors.getColor(blockState, facadeAccess, pos, quad.getTintIndex()));
+                                blockColors.getColor(blockState, facadeAccess, pos, quad.colorIndex()));
                     }
 
                     for (AABB box : holeStrips) {
-                        emitter.fromVanilla(quad.getVertices(), 0);
+                        quad.copyTo(emitter);
                         // Keep the cull-face for faces that are flush with the outer block-face on the
                         // side the facade is attached to, but clear it for anything that faces inwards
                         emitter.cullFace(cullFace == side ? side : null);
-                        emitter.nominalFace(quad.getDirection());
-                        emitter.shade(quad.isShade());
-                        emitter.ambientOcclusion(quad.hasAmbientOcclusion());
+                        // manually set nominal face as the transformers below assume it's not null
+                        emitter.nominalFace(quad.lightFace());
                         interpolator.setInputQuad(emitter);
 
                         QuadClamper clamper = new QuadClamper(box);
@@ -333,7 +322,14 @@ public class FacadeBuilder {
 
                         emitter.emit();
                     }
-                }
+
+                    // Cancel rendering, we only render to inspect the quads, but we don't want to output them.
+                    return false;
+                });
+                model.emitBlockQuads(level, blockState, pos, rand, context);
+                context.popTransform();
+            } finally {
+                CableBusBlock.RENDERING_FACADE_DIRECTION.set(null);
             }
         }
 
@@ -356,7 +352,7 @@ public class FacadeBuilder {
 
         QuadReInterpolator interpolator = new QuadReInterpolator();
 
-        var itemColors = Minecraft.getInstance().getItemColors();
+        var itemColors = Minecraft.getInstance().itemColors;
         QuadClamper clamper = new QuadClamper(THIN_FACADE_BOXES[side.ordinal()]);
 
         for (int cullFaceIdx = 0; cullFaceIdx <= ModelHelper.NULL_FACE_ID; cullFaceIdx++) {
@@ -374,8 +370,6 @@ public class FacadeBuilder {
                 emitter.fromVanilla(quad.getVertices(), 0);
                 emitter.cullFace(cullFace);
                 emitter.nominalFace(quad.getDirection());
-                emitter.shade(quad.isShade());
-                emitter.ambientOcclusion(quad.hasAmbientOcclusion());
                 interpolator.setInputQuad(emitter);
 
                 if (!clamper.transform(emitter)) {

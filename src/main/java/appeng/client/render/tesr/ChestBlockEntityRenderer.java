@@ -44,7 +44,6 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import appeng.api.orientation.BlockOrientation;
 import appeng.blockentity.storage.MEChestBlockEntity;
 import appeng.client.render.BakedModelUnwrapper;
-import appeng.client.render.DelegateBakedModel;
 import appeng.client.render.model.DriveBakedModel;
 import appeng.core.definitions.AEBlocks;
 

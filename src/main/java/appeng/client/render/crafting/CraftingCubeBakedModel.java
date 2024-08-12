@@ -22,7 +22,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.Supplier;
 
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.renderer.RenderType;
@@ -33,21 +40,19 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.IDynamicBakedModel;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.blockentity.crafting.CraftingCubeModelData;
 import appeng.client.render.cablebus.CubeBuilder;
 import appeng.util.Platform;
+import starry.refabricated.ae2.render.DynamicBakedModel;
+import starry.refabricated.ae2.render.ModelData;
 
 /**
  * The base model for baked models used by components of the crafting cube multi-block in it's formed state. Primarily
  * this base class handles adding the "ring" that frames the multi-block structure and delegates rendering of the
  * "inner" part of each block to the subclasses of this class.
  */
-abstract class CraftingCubeBakedModel implements IDynamicBakedModel {
-    private static final ChunkRenderTypeSet RENDER_TYPES = ChunkRenderTypeSet.of(RenderType.CUTOUT);
+abstract class CraftingCubeBakedModel implements DynamicBakedModel {
 
     private final TextureAtlasSprite ringCorner;
 
@@ -62,53 +67,67 @@ abstract class CraftingCubeBakedModel implements IDynamicBakedModel {
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand,
-            ModelData extraData, RenderType renderType) {
-        if (side == null) {
-            return Collections.emptyList(); // No generic quads for this model
+    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> RandomSourceSupplier, RenderContext context) {
+        var modelData = getModelData(blockView, pos);
+        var connections = modelData != null ? modelData.getConnections()
+                : EnumSet.noneOf(Direction.class);
+
+        CubeBuilder builder = new CubeBuilder(context.getEmitter());
+
+        for (Direction side : Direction.values()) {
+            builder.setDrawFaces(EnumSet.of(side));
+
+            // Add the quads for the ring that frames the entire multi-block structure
+            this.addRing(builder, side, connections);
+
+            // Calculate the bounds of the "inner" block that is framed by the border drawn
+            // above
+            float x2 = connections.contains(Direction.EAST) ? 16 : 13.01f;
+            float x1 = connections.contains(Direction.WEST) ? 0 : 2.99f;
+
+            float y2 = connections.contains(Direction.UP) ? 16 : 13.01f;
+            float y1 = connections.contains(Direction.DOWN) ? 0 : 2.99f;
+
+            float z2 = connections.contains(Direction.SOUTH) ? 16 : 13.01f;
+            float z1 = connections.contains(Direction.NORTH) ? 0 : 2.99f;
+
+            // On the axis of the side that we're currently drawing, extend the dimensions
+            // out to the outer face of the block
+            switch (side) {
+                case DOWN:
+                case UP:
+                    y1 = 0;
+                    y2 = 16;
+                    break;
+                case NORTH:
+                case SOUTH:
+                    z1 = 0;
+                    z2 = 16;
+                    break;
+                case WEST:
+                case EAST:
+                    x1 = 0;
+                    x2 = 16;
+                    break;
+            }
+
+            this.addInnerCube(side, state, modelData, builder, x1, y1, z1, x2, y2, z2);
         }
+    }
 
-        EnumSet<Direction> connections = getConnections(extraData);
+    @Override
+    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> RandomSourceSupplier, RenderContext context) {
 
-        List<BakedQuad> quads = new ArrayList<>();
-        CubeBuilder builder = new CubeBuilder(quads);
+    }
 
-        builder.setDrawFaces(EnumSet.of(side));
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource RandomSource) {
+        return Collections.emptyList();
+    }
 
-        // Add the quads for the ring that frames the entire multi-block structure
-        this.addRing(builder, side, connections);
-
-        // Calculate the bounds of the "inner" block that is framed by the border drawn
-        // above
-        float x2 = connections.contains(Direction.EAST) ? 16 : 13.01f;
-        float x1 = connections.contains(Direction.WEST) ? 0 : 2.99f;
-
-        float y2 = connections.contains(Direction.UP) ? 16 : 13.01f;
-        float y1 = connections.contains(Direction.DOWN) ? 0 : 2.99f;
-
-        float z2 = connections.contains(Direction.SOUTH) ? 16 : 13.01f;
-        float z1 = connections.contains(Direction.NORTH) ? 0 : 2.99f;
-
-        // On the axis of the side that we're currently drawing, extend the dimensions
-        // out to the outer face of the block
-        switch (side) {
-            case DOWN, UP -> {
-                y1 = 0;
-                y2 = 16;
-            }
-            case NORTH, SOUTH -> {
-                z1 = 0;
-                z2 = 16;
-            }
-            case WEST, EAST -> {
-                x1 = 0;
-                x2 = 16;
-            }
-        }
-
-        this.addInnerCube(side, state, extraData, builder, x1, y1, z1, x2, y2, z2);
-
-        return quads;
+    @Override
+    public ItemTransforms getTransforms() {
+        return ItemTransforms.NO_TRANSFORMS;
     }
 
     private void addRing(CubeBuilder builder, Direction side, EnumSet<Direction> connections) {
@@ -227,17 +246,21 @@ abstract class CraftingCubeBakedModel implements IDynamicBakedModel {
         builder.addCube(x1, y1, z1, x2, y2, z2);
     }
 
-    // Retrieve the cube connection state from the block state
+    /// Retrieve the cube connection state from the block state
     // If none is present, just assume there are no adjacent crafting cube blocks
-    private static EnumSet<Direction> getConnections(ModelData modelData) {
-        if (modelData.has(CraftingCubeModelData.CONNECTIONS)) {
-            return modelData.get(CraftingCubeModelData.CONNECTIONS);
+    private static CraftingCubeModelData getModelData(BlockAndTintGetter blockRenderView, BlockPos pos) {
+        if (!(blockRenderView instanceof RenderAttachedBlockView)) {
+            return null;
         }
-        return EnumSet.noneOf(Direction.class);
+        Object attached = ((RenderAttachedBlockView) blockRenderView).getBlockEntityRenderAttachment(pos);
+        if (attached instanceof CraftingCubeModelData) {
+            return (CraftingCubeModelData) attached;
+        }
+        return null;
     }
 
     protected abstract void addInnerCube(Direction facing, BlockState state, ModelData modelData, CubeBuilder builder,
-            float x1, float y1, float z1, float x2, float y2, float z2);
+                                         float x1, float y1, float z1, float x2, float y2, float z2);
 
     @Override
     public boolean useAmbientOcclusion() {
@@ -267,10 +290,5 @@ abstract class CraftingCubeBakedModel implements IDynamicBakedModel {
     @Override
     public ItemOverrides getOverrides() {
         return ItemOverrides.EMPTY;
-    }
-
-    @Override
-    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data) {
-        return RENDER_TYPES;
     }
 }

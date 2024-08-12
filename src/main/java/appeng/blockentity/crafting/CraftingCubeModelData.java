@@ -19,29 +19,53 @@
 package appeng.blockentity.crafting;
 
 import java.util.EnumSet;
+import java.util.Objects;
 
 import net.minecraft.core.Direction;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.client.model.data.ModelProperty;
 
-import appeng.client.render.model.AEModelData;
+import starry.refabricated.ae2.render.ModelData;
 
-public final class CraftingCubeModelData {
+public class CraftingCubeModelData implements ModelData {
 
     // Contains information on which sides of the block are connected to other parts
     // of a formed crafting cube
-    public static final ModelProperty<EnumSet<Direction>> CONNECTIONS = new ModelProperty<>();
+    private final EnumSet<Direction> connections;
 
-    private CraftingCubeModelData() {
+    public CraftingCubeModelData(EnumSet<Direction> connections) {
+        this.connections = Objects.requireNonNull(connections);
     }
 
-    public static ModelData.Builder builder(EnumSet<Direction> connections) {
-        return AEModelData.builder()
-                .with(AEModelData.SKIP_CACHE, true)
-                .with(CONNECTIONS, connections);
+    @Override
+    public boolean isCacheable() {
+        return false; // Too many variants
     }
 
-    public static ModelData create(EnumSet<Direction> connections) {
-        return builder(connections).build();
+    public EnumSet<Direction> getConnections() {
+        return connections;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        CraftingCubeModelData that = (CraftingCubeModelData) o;
+        return connections.equals(that.connections);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), connections);
+    }
+
+    @Override
+    public byte getSpin() {
+        return 0;
     }
 }

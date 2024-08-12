@@ -18,13 +18,12 @@
 
 package appeng.thirdparty.codechicken.lib.model.pipeline.transformers;
 
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import org.joml.Vector3f;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
-
-import appeng.thirdparty.fabric.MutableQuadView;
-import appeng.thirdparty.fabric.RenderContext;
 
 /**
  * This transformer simply clamps the vertices inside the provided box. You probably want to Re-Interpolate the UV's,

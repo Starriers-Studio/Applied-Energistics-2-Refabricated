@@ -25,17 +25,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.cache.Weigher;
 
-import org.jetbrains.annotations.NotNull;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.model.WrapperBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -48,19 +55,19 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.IDynamicBakedModel;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.client.model.data.ModelProperty;
 
 import appeng.api.parts.IPartModel;
+import appeng.parts.reporting.ReportingModelData;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
-import appeng.block.networking.CableBusBlock;
-import appeng.client.render.model.AEModelData;
-import appeng.thirdparty.fabric.MeshBuilderImpl;
+import starry.refabricated.ae2.render.DynamicPartBakedModel;
+import starry.refabricated.ae2.render.ModelData;
 
-public class CableBusBakedModel implements IDynamicBakedModel {
+public class CableBusBakedModel implements BakedModel, FabricBakedModel {
+
+    private static final Mesh EMPTY_MESH = consumer -> {};
+
+    private static final Renderer RENDERER = RendererAccess.INSTANCE.getRenderer();
 
     // The number of quads overall that will be cached
     private static final int CACHE_QUAD_COUNT = 5000;
@@ -79,19 +86,7 @@ public class CableBusBakedModel implements IDynamicBakedModel {
             Direction.UP, Direction.NORTH, Direction.DOWN, Direction.SOUTH // EAST
     };
 
-    /**
-     * Used to hold extra ModelData for facade rendering.
-     * <p>
-     * We can't directly query it in {@link #getQuads(BlockState, Direction, RandomSource, ModelData, RenderType)} as we
-     * need a {@link BlockAndTintGetter}, so we query it in {@link #getModelData} and store it in a model property.
-     */
-    // TODO: now that we're storing the level anyway, might as well query it
-    private static final ModelProperty<FacadeModelData> FACADE_DATA = new ModelProperty<>();
-
-    private record FacadeModelData(EnumMap<Direction, ModelData> facadeData, BlockAndTintGetter level) {
-    }
-
-    private final LoadingCache<CableBusRenderState, List<BakedQuad>> cableModelCache;
+    private final LoadingCache<CableBusRenderState, Mesh> cableModelCache;
 
     private final CableBuilder cableBuilder;
 
@@ -107,110 +102,84 @@ public class CableBusBakedModel implements IDynamicBakedModel {
         this.facadeBuilder = facadeBuilder;
         this.partModels = partModels;
         this.particleTexture = particleTexture;
-        this.cableModelCache = CacheBuilder.newBuilder()//
-                .maximumWeight(CACHE_QUAD_COUNT)//
-                .weigher((Weigher<CableBusRenderState, List<BakedQuad>>) (key, value) -> value.size())//
-                .build(new CacheLoader<CableBusRenderState, List<BakedQuad>>() {
+        this.cableModelCache = CacheBuilder.newBuilder()
+                .maximumWeight(CACHE_QUAD_COUNT)
+                .build(new CacheLoader<CableBusRenderState, Mesh>() {
                     @Override
-                    public List<BakedQuad> load(CableBusRenderState renderState) {
-                        final List<BakedQuad> model = new ArrayList<>();
-                        addCableQuads(renderState, model);
-                        return model;
+                    public Mesh load(CableBusRenderState renderState) {
+                        Mesh mesh = buildCableModel(renderState);
+                        return mesh != null ? mesh : EMPTY_MESH;
                     }
                 });
     }
 
     @Override
-    public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos,
-            @NotNull BlockState state, @NotNull ModelData data) {
-        CableBusRenderState renderState = data.get(CableBusRenderState.PROPERTY);
-        if (renderState == null || renderState.getFacades().isEmpty()) {
-            return data;
-        }
+    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
+        // This model will only ever be used for blocks
+    }
 
-        var dispatcher = Minecraft.getInstance().getBlockRenderer();
-
-        EnumMap<Direction, ModelData> facadeModelData = new EnumMap<>(Direction.class);
-        for (var entry : renderState.getFacades().entrySet()) {
-            var side = entry.getKey();
-            CableBusBlock.RENDERING_FACADE_DIRECTION.set(side);
-            try {
-                var blockState = entry.getValue().getSourceBlock();
-                var model = dispatcher.getBlockModel(blockState);
-                facadeModelData.put(side, model.getModelData(level, pos, blockState, data));
-            } finally {
-                CableBusBlock.RENDERING_FACADE_DIRECTION.set(null);
-            }
+    private CableBusRenderState getRenderState(BlockAndTintGetter blockView, BlockPos pos) {
+        RenderAttachedBlockView renderAttachedBlockView = (RenderAttachedBlockView) blockView;
+        Object renderAttachment = renderAttachedBlockView.getBlockEntityRenderAttachment(pos);
+        if (renderAttachment instanceof CableBusRenderState) {
+            return (CableBusRenderState) renderAttachment;
         }
-        return data.derive().with(FACADE_DATA, new FacadeModelData(facadeModelData, level)).build();
+        return null;
+
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand,
-            ModelData data, RenderType renderType) {
-        CableBusRenderState renderState = data.get(CableBusRenderState.PROPERTY);
+    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
+        CableBusRenderState renderState = getRenderState(blockView, pos);
 
-        if (renderState == null || side != null) {
-            return Collections.emptyList();
+        if (renderState == null ) {
+            return;
         }
 
-        List<BakedQuad> quads = new ArrayList<>();
+        // First, handle the cable at the center of the cable bus
+        final Mesh cableModel = cableModelCache.getUnchecked(renderState);
+        if (cableModel != EMPTY_MESH) {
+            context.meshConsumer().accept(cableModel);
+        }
 
-        // The core parts of the cable will only be rendered in the CUTOUT layer.
-        // Facades will add themselves to what ever the block would be rendered with,
-        // except when transparent facades are enabled, they are forced to TRANSPARENT.
-        if (renderType == null || renderType == RenderType.cutout()) {
+        // Then handle attachments
+        for (Direction facing : Direction.values()) {
+            final IPartModel partModel = renderState.getAttachments().get(facing);
+            if (partModel == null) {
+                continue;
+            }
 
-            // First, handle the cable at the center of the cable bus
-            final List<BakedQuad> cableModel = cableModelCache.getUnchecked(renderState);
-            quads.addAll(cableModel);
+            ModelData partModelData = renderState.getPartModelData().get(facing);
 
-            var meshBuilder = new MeshBuilderImpl();
-            var emitter = meshBuilder.getEmitter();
+            for (ResourceLocation model : partModel.getModels()) {
+                BakedModel bakedModel = this.partModels.get(model);
 
-            // Then handle attachments
-            for (Direction facing : Direction.values()) {
-                final IPartModel partModel = renderState.getAttachments().get(facing);
-                if (partModel == null) {
-                    continue;
+                if (bakedModel == null) {
+                    throw new IllegalStateException("Trying to use an unregistered part model: " + model);
                 }
 
-                ModelData partModelData = renderState.getPartModelData().get(facing);
-                if (partModelData == null) {
-                    partModelData = ModelData.EMPTY;
+                var spin = getPartSpin(partModelData);
+
+                context.pushTransform(QuadRotator.get(facing, spin));
+                if (bakedModel instanceof DynamicPartBakedModel dynamicPartBakedModel) {
+                    dynamicPartBakedModel.emitQuads(blockView, state, pos, randomSupplier, context,
+                            facing, partModelData);
+                } else if (WrapperBakedModel
+                        .unwrap(bakedModel) instanceof DynamicPartBakedModel dynamicPartBakedModel) {
+                    // Shitty workaround to make our custom part models work even when Continuity wraps them for its
+                    // emissive support.
+                    dynamicPartBakedModel.emitQuads(blockView, state, pos, randomSupplier, context,
+                            facing, partModelData);
+
+                } else {
+                    bakedModel.emitBlockQuads(blockView, state, pos, randomSupplier, context);
                 }
-
-                for (var model : partModel.getModels()) {
-                    BakedModel bakedModel = this.partModels.get(model);
-
-                    if (bakedModel == null) {
-                        throw new IllegalStateException("Trying to use an unregistered part model: " + model);
-                    }
-
-                    List<BakedQuad> partQuads = bakedModel.getQuads(state, null, rand, partModelData, renderType);
-
-                    var spin = getPartSpin(partModelData);
-
-                    // Rotate quads accordingly
-                    var rotator = QuadRotator.get(facing, spin);
-
-                    for (var partQuad : partQuads) {
-                        emitter.fromVanilla(partQuad, null);
-                        rotator.transform(emitter);
-                        quads.add(emitter.toBakedQuad(partQuad.getSprite()));
-                    }
-                }
+                context.popTransform();
             }
         }
 
-        FacadeModelData facadeData = data.get(FACADE_DATA);
-        if (facadeData != null) {
-            this.facadeBuilder
-                    .getFacadeMesh(renderState, () -> rand, facadeData.level, facadeData.facadeData, renderType)
-                    .forEach(qv -> quads.add(qv.toBlockBakedQuad()));
-        }
-
-        return quads;
+        Mesh mesh = this.facadeBuilder.getFacadeMesh(renderState, randomSupplier, blockView, context);
+        context.meshConsumer().accept(mesh);
     }
 
     // Determines whether a cable is connected to exactly two sides that are
@@ -241,22 +210,24 @@ public class CableBusBakedModel implements IDynamicBakedModel {
     }
 
     private static int getPartSpin(ModelData partModelData) {
-        var spin = partModelData.get(AEModelData.SPIN);
-        if (spin != null) {
-            return spin;
+        if (partModelData instanceof ReportingModelData reportingModelData) {
+            return reportingModelData.getSpin();
         }
 
         return 0;
     }
 
-    private void addCableQuads(CableBusRenderState renderState, List<BakedQuad> quadsOut) {
+    private Mesh buildCableModel(CableBusRenderState renderState) {
         AECableType cableType = renderState.getCableType();
         if (cableType == AECableType.NONE) {
-            return;
+            return null;
         }
 
         AEColor cableColor = renderState.getCableColor();
         EnumMap<Direction, AECableType> connectionTypes = renderState.getConnectionTypes();
+
+        MeshBuilder builder = RENDERER.meshBuilder();
+        QuadEmitter emitter = builder.getEmitter();
 
         // If the connection is straight, no busses are attached, and no covered core
         // has been forced (in case of glass
@@ -268,30 +239,30 @@ public class CableBusBakedModel implements IDynamicBakedModel {
 
             switch (cableType) {
                 case GLASS:
-                    this.cableBuilder.addStraightGlassConnection(facing, cableColor, quadsOut);
+                    this.cableBuilder.addStraightGlassConnection(facing, cableColor, emitter);
                     break;
                 case COVERED:
-                    this.cableBuilder.addStraightCoveredConnection(facing, cableColor, quadsOut);
+                    this.cableBuilder.addStraightCoveredConnection(facing, cableColor, emitter);
                     break;
                 case SMART:
                     this.cableBuilder.addStraightSmartConnection(facing, cableColor,
-                            renderState.getChannelsOnSide().get(facing), quadsOut);
+                            renderState.getChannelsOnSide().get(facing), emitter);
                     break;
                 case DENSE_COVERED:
-                    this.cableBuilder.addStraightDenseCoveredConnection(facing, cableColor, quadsOut);
+                    this.cableBuilder.addStraightDenseCoveredConnection(facing, cableColor, emitter);
                     break;
                 case DENSE_SMART:
                     this.cableBuilder.addStraightDenseSmartConnection(facing, cableColor,
-                            renderState.getChannelsOnSide().get(facing), quadsOut);
+                            renderState.getChannelsOnSide().get(facing), emitter);
                     break;
                 default:
                     break;
             }
 
-            return; // Don't render the other form of connection
+            return builder.build(); // Don't render the other form of connection
         }
 
-        this.cableBuilder.addCableCore(renderState.getCoreType(), cableColor, quadsOut);
+        this.cableBuilder.addCableCore(renderState.getCoreType(), cableColor, emitter);
 
         // Render all internal connections to attachments
         EnumMap<Direction, Integer> attachmentConnections = renderState.getAttachmentConnections();
@@ -301,13 +272,13 @@ public class CableBusBakedModel implements IDynamicBakedModel {
 
             switch (cableType) {
                 case GLASS:
-                    this.cableBuilder.addConstrainedGlassConnection(facing, cableColor, distance, quadsOut);
+                    this.cableBuilder.addConstrainedGlassConnection(facing, cableColor, distance, emitter);
                     break;
                 case COVERED:
-                    this.cableBuilder.addConstrainedCoveredConnection(facing, cableColor, distance, quadsOut);
+                    this.cableBuilder.addConstrainedCoveredConnection(facing, cableColor, distance, emitter);
                     break;
                 case SMART:
-                    this.cableBuilder.addConstrainedSmartConnection(facing, cableColor, distance, channels, quadsOut);
+                    this.cableBuilder.addConstrainedSmartConnection(facing, cableColor, distance, channels, emitter);
                     break;
                 case DENSE_COVERED:
                 case DENSE_SMART:
@@ -328,28 +299,29 @@ public class CableBusBakedModel implements IDynamicBakedModel {
             switch (cableType) {
                 case GLASS:
                     this.cableBuilder.addGlassConnection(facing, cableColor, connectionType, cableBusAdjacent,
-                            quadsOut);
+                            emitter);
                     break;
                 case COVERED:
                     this.cableBuilder.addCoveredConnection(facing, cableColor, connectionType, cableBusAdjacent,
-                            quadsOut);
+                            emitter);
                     break;
                 case SMART:
                     this.cableBuilder.addSmartConnection(facing, cableColor, connectionType, cableBusAdjacent, channels,
-                            quadsOut);
+                            emitter);
                     break;
                 case DENSE_COVERED:
                     this.cableBuilder.addDenseCoveredConnection(facing, cableColor, connectionType, cableBusAdjacent,
-                            quadsOut);
+                            emitter);
                     break;
                 case DENSE_SMART:
                     this.cableBuilder.addDenseSmartConnection(facing, cableColor, connectionType, cableBusAdjacent,
-                            channels, quadsOut);
+                            channels, emitter);
                     break;
                 default:
                     break;
             }
         }
+        return builder.build();
     }
 
     /**
@@ -430,7 +402,7 @@ public class CableBusBakedModel implements IDynamicBakedModel {
     }
 
     @Override
-    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data) {
-        return ChunkRenderTypeSet.all();
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
+        return Collections.emptyList();
     }
 }

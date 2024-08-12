@@ -21,10 +21,10 @@ package appeng.client.render.crafting;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.block.crafting.AbstractCraftingUnitBlock;
 import appeng.client.render.cablebus.CubeBuilder;
+import starry.refabricated.ae2.render.ModelData;
 
 /**
  * Crafting cube baked model that adds a full-bright light texture on top of a normal base texture onto the inner cube.
@@ -45,7 +45,7 @@ public class LightBakedModel extends CraftingCubeBakedModel {
 
     @Override
     protected void addInnerCube(Direction facing, BlockState state, ModelData modelData, CubeBuilder builder, float x1,
-            float y1, float z1, float x2, float y2, float z2) {
+                                float y1, float z1, float x2, float y2, float z2) {
         builder.setTexture(this.baseTexture);
         builder.addCube(x1, y1, z1, x2, y2, z2);
 

@@ -21,7 +21,6 @@ package appeng.client.render.crafting;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.api.orientation.IOrientationStrategy;
 import appeng.api.orientation.RelativeSide;
@@ -29,6 +28,7 @@ import appeng.api.util.AEColor;
 import appeng.block.crafting.CraftingMonitorBlock;
 import appeng.blockentity.crafting.CraftingMonitorModelData;
 import appeng.client.render.cablebus.CubeBuilder;
+import starry.refabricated.ae2.render.ModelData;
 
 /**
  * The baked model for the crafting monitor. Please note that this model doesn't handle the item being displayed. That
@@ -60,7 +60,7 @@ public class MonitorBakedModel extends CraftingCubeBakedModel {
 
     @Override
     protected void addInnerCube(Direction side, BlockState state, ModelData modelData, CubeBuilder builder, float x1,
-            float y1, float z1, float x2, float y2, float z2) {
+                                float y1, float z1, float x2, float y2, float z2) {
         Direction forward = IOrientationStrategy.get(state).getSide(state, RelativeSide.FRONT);
 
         // For sides other than the front, use the chassis texture
@@ -97,8 +97,8 @@ public class MonitorBakedModel extends CraftingCubeBakedModel {
     }
 
     private static AEColor getColor(ModelData modelData) {
-        if (modelData.has(CraftingMonitorModelData.COLOR)) {
-            return modelData.get(CraftingMonitorModelData.COLOR);
+        if (modelData instanceof CraftingMonitorModelData) {
+            return ((CraftingMonitorModelData) modelData).getColor();
         }
         return AEColor.TRANSPARENT;
     }

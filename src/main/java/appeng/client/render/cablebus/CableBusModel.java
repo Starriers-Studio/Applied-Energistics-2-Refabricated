@@ -61,12 +61,11 @@ public class CableBusModel implements BasicUnbakedModel {
     @Override
     public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter,
             ModelState modelState) {
-        Map<ResourceLocation, BakedModel> partModels = this.loadPartModels(baker, spriteGetter, modelState);
+        Map<ResourceLocation, BakedModel> partModels = this.loadPartModels(baker, modelState);
 
         CableBuilder cableBuilder = new CableBuilder(spriteGetter);
 
-        BakedModel translucentFacadeModel = baker.bake(TRANSLUCENT_FACADE_MODEL, modelState,
-                spriteGetter);
+        BakedModel translucentFacadeModel = baker.bake(TRANSLUCENT_FACADE_MODEL, modelState);
 
         FacadeBuilder facadeBuilder = new FacadeBuilder(baker, translucentFacadeModel);
 
@@ -78,12 +77,11 @@ public class CableBusModel implements BasicUnbakedModel {
         return new CableBusBakedModel(cableBuilder, facadeBuilder, partModels, particleTexture);
     }
 
-    private Map<ResourceLocation, BakedModel> loadPartModels(ModelBaker baker,
-            Function<Material, TextureAtlasSprite> spriteGetterIn, ModelState transformIn) {
+    private Map<ResourceLocation, BakedModel> loadPartModels(ModelBaker baker, ModelState transformIn) {
         ImmutableMap.Builder<ResourceLocation, BakedModel> result = ImmutableMap.builder();
 
         for (ResourceLocation location : PartModelsInternal.getModels()) {
-            BakedModel bakedModel = baker.bake(location, transformIn, spriteGetterIn);
+            BakedModel bakedModel = baker.bake(location, transformIn);
             if (bakedModel == null) {
                 AELog.warn("Failed to bake part model {}", location);
             } else {

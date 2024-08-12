@@ -27,20 +27,17 @@ import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.client.model.data.ModelProperty;
 
 import appeng.api.parts.IPartModel;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
+import starry.refabricated.ae2.render.ModelData;
 
 /**
  * This class captures the entire rendering state needed for a cable bus and transports it to the rendering thread for
  * processing.
  */
 public class CableBusRenderState {
-
-    public static final ModelProperty<CableBusRenderState> PROPERTY = new ModelProperty<>();
 
     // The cable type used for rendering the outgoing connections to other blocks
     // and attached parts

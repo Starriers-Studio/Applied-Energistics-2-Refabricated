@@ -18,21 +18,20 @@
 
 package appeng.client.render;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Supplier;
 
-import javax.annotation.Nullable;
-
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import appeng.items.parts.FacadeItem;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 import appeng.client.render.cablebus.FacadeBuilder;
 
@@ -41,37 +40,40 @@ import appeng.client.render.cablebus.FacadeBuilder;
  *
  * @author covers1624
  */
-public class FacadeBakedItemModel extends DelegateBakedModel {
+public class FacadeBakedItemModel extends ForwardingBakedModel {
 
-    private final ItemStack textureStack;
     private final FacadeBuilder facadeBuilder;
-    private List<BakedQuad> quads = null;
+    private final Int2ObjectMap<Mesh> cache = new Int2ObjectArrayMap<>();
 
-    protected FacadeBakedItemModel(BakedModel base, ItemStack textureStack, FacadeBuilder facadeBuilder) {
-        super(base);
-        this.textureStack = textureStack;
+    protected FacadeBakedItemModel(BakedModel baseModel, FacadeBuilder facadeBuilder) {
+        this.wrapped = baseModel;
         this.facadeBuilder = facadeBuilder;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand) {
-        return getQuads(state, side, rand, ModelData.EMPTY, null);
+    public boolean isVanillaAdapter() {
+        return false;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand,
-            ModelData data, RenderType renderType) {
-        if (side != null) {
-            return Collections.emptyList();
+    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
+        if (!(stack.getItem() instanceof FacadeItem itemFacade)) {
+            return;
         }
-        if (quads == null) {
-            quads = new ArrayList<>();
-            quads.addAll(
-                    this.facadeBuilder.buildFacadeItemQuads(this.textureStack, Direction.NORTH).toBakedBlockQuads());
-            quads.addAll(this.getBaseModel().getQuads(state, side, rand, data, renderType));
-            quads = Collections.unmodifiableList(quads);
+
+        super.emitItemQuads(stack, randomSupplier, context);
+
+        ItemStack textureItem = itemFacade.getTextureItem(stack);
+        if (!textureItem.isEmpty()) {
+            int itemId = Item.getId(textureItem.getItem());
+            Mesh mesh = this.cache.get(itemId);
+            if (mesh == null) {
+                mesh = this.facadeBuilder.buildFacadeItemQuads(textureItem, Direction.NORTH);
+                this.cache.put(itemId, mesh);
+            }
+
+            mesh.outputTo(context.getEmitter());
         }
-        return quads;
     }
 
     @Override
